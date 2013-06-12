@@ -596,12 +596,9 @@ CorreRutina_Error:
 End Sub
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 84 líneas de código.
+[BookLoaderClass] 81 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
-
-Private Const LIB_PATH As String = "MyLibs" 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
-'----------------------------------------------------------------------------------------------------
 
 Private CurrentActiveBook As Workbook
 Private SummonedBook As Workbook
@@ -684,7 +681,7 @@ Private Sub RestoreCalculation()
 End Sub
 \\\--- END OF MODULE ---
 
-[Config] 7 líneas de código.
+[Config] 11 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo de macros personales
@@ -693,6 +690,10 @@ End Sub
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
 ' Version   : 0.1 - 2013-06-12
 '---------------------------------------------------------------------------------------
+
+'Path relativa al libro actual en donde se encuentran los archivos de librerías.
+Public Const LIB_PATH As String = "MyLibs"
+
 \\\--- END OF MODULE ---
 
 
