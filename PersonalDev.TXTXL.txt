@@ -481,7 +481,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[RemoveInternalPasswords] 18 líneas de código.
+[RemoveInternalPasswords] 17 líneas de código.
 ///--- BEGINNING OF MODULE ---
 'Abre el libro AllInternalPasswords.xls que contiene todas las macros y componentes para eliminar las contraseñas internas de libros excel 2003 y anteriores.
 Option Explicit
@@ -489,17 +489,16 @@ Option Explicit
 Const BOOK_PATH As String = "..\OtherBooks\allinternalpasswords.xls" 'Ruta relativa hacia el libro.
 
 Sub RemoveInternalPasswords()
-    Dim LibroActivo As Workbook, LibroContraseñas As Workbook
+    Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
+    BL.ErrNum = 0: BL.OpenLibBook ("InternalPasswordsRemover.xls")
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+
+    Dim NombreCompletoMacro As String 'Determinamos el nombre completo de la macro a correr
+    NombreCompletoMacro = "InternalPasswordsRemover.xls!Main.RemoveAll"
     
-    Set LibroActivo = ActiveWorkbook
-    Set LibroContraseñas = Workbooks.Open(ThisWorkbook.Path & "\" & BOOK_PATH)
-    
-    LibroActivo.Activate
     MsgBox "Se removerán las contraseñas de protección del libro y las hojas, si existen." & vbNewLine & vbNewLine & "Por favor espere. " & vbNewLine & "El proceso puede tardar algunos minutos.", vbOKOnly, "Remove Internal Passwords"
-    Application.Run (LibroContraseñas.Name & "!RemoveAll")
+    Application.Run NombreCompletoMacro
     MsgBox "Proceso terminado.", vbOKOnly, "Remove Internal Passwords"
-    
-    LibroContraseñas.Close False
 End Sub
 \\\--- END OF MODULE ---
 
