@@ -23,6 +23,7 @@ Módulos VBA:
  [ReplaceByRange] Tipo: 1
  [MyLibs] Tipo: 1
  [BookLoaderClass] Tipo: 2
+ [Config] Tipo: 1
 
 Codigo:
 [Interactive] 122 líneas de código.
@@ -681,6 +682,17 @@ Private Sub RestoreCalculation()
     On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
     Application.Calculation = BackupCalculationMode
 End Sub
+\\\--- END OF MODULE ---
+
+[Config] 7 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' File      : Archivo de macros personales
+' Author    : +
+' Date      : 12/06/2013
+' Purpose   : Macros útiles que siempre están disponibles en Excel.
+' Version   : 0.1 - 2013-06-12
+'---------------------------------------------------------------------------------------
 \\\--- END OF MODULE ---
 
 
