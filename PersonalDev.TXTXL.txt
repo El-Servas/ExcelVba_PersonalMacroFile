@@ -1,0 +1,687 @@
+Representación Textual del archivo de Excel: "PersonalDev.XLSB"
+
+Hojas:
+ [Sheet1]
+
+Contenido:
+[Sheet1]
+
+Nombres:
+
+Nombre del proyecto VB: [VBA_PERSONAL]
+
+Módulos VBA:
+ [Interactive] Tipo: 1
+ [ThisWorkbook] Tipo: 100
+ [Sheet1] Tipo: 100
+ [Utils] Tipo: 1
+ [UI] Tipo: 1
+ [foWBChooser] Tipo: 3
+ [VC_COT] Tipo: 1
+ [foOptionChooser] Tipo: 3
+ [RemoveInternalPasswords] Tipo: 1
+ [ReplaceByRange] Tipo: 1
+ [MyLibs] Tipo: 1
+ [BookLoaderClass] Tipo: 2
+
+Codigo:
+[Interactive] 122 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+' Módulo para funciones que ayuden a trabajar en la hoja en vivo.
+'==================================================================================
+
+Sub AutoFitSelection()
+    Selection.Columns.AutoFit
+End Sub
+
+Sub Titularizar_Celdas()
+    If Not AssertActiveWindow() Then
+        Exit Sub    'Nada que hacer.
+    End If
+    
+Dim Rango As Range 'Nos ayuda en el IntelliSense
+Dim celda As Range
+
+Set Rango = Selection.Cells
+
+Rango.HorizontalAlignment = xlHAlignCenter
+Rango.Font.Bold = True
+Rango.Font.ColorIndex = xlAutomatic
+Rango.Interior.ColorIndex = 35
+'Rango.WrapText = False
+
+For Each celda In Rango
+    celda.BorderAround (xlSolid)
+Next
+
+Rango.CurrentRegion.Columns.AutoFit
+
+Set celda = Nothing
+Set Rango = Nothing
+End Sub
+
+Sub ConfigurarPagina(Optional InPagesWide, Optional InPagesTall, Optional InPageOrientation)
+    If Not AssertActiveWindow() Then
+        Exit Sub    'Nada que hacer.
+    End If
+    
+    'Defaults
+    If IsMissing(InPagesWide) Then InPagesWide = 1
+    If IsMissing(InPagesTall) Then InPagesTall = 1
+    If IsMissing(InPageOrientation) Then InPageOrientation = xlPortrait
+    
+    lbBKVisible = Application.Visible
+    lbBKInteractive = Application.INTERACTIVE
+    lbScreenUpdating = Application.ScreenUpdating
+    
+    Application.INTERACTIVE = False
+    Application.ScreenUpdating = False
+    'Application.Visible = False
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = ""
+        .PrintTitleColumns = ""
+    End With
+    'ActiveSheet.PageSetup.PrintArea = ""
+    With ActiveSheet.PageSetup
+        '.LeftHeader = ""
+        '.CenterHeader = ""
+        '.RightHeader = ""
+        .LeftFooter = "Archivo: &F" & Chr(10) & "Página &P de &N"
+        '.CenterFooter = ""
+        .RightFooter = "Hoja: &A" & Chr(10) & "&D - &T"
+        .LeftMargin = Application.InchesToPoints(0.590551181102362)
+        .RightMargin = Application.InchesToPoints(0.590551181102362)
+        .TopMargin = Application.InchesToPoints(0.590551181102362)
+        .BottomMargin = Application.InchesToPoints(0.590551181102362)
+        .HeaderMargin = Application.InchesToPoints(0.393700787401575)
+        .FooterMargin = Application.InchesToPoints(0.393700787401575)
+        '.PrintHeadings = False
+        '.PrintGridlines = False
+        '.PrintComments = xlPrintNoComments
+        '.PrintQuality = 600
+        .CenterHorizontally = True
+        '.CenterVertically = False
+        .Orientation = InPageOrientation
+        '.Draft = False
+        '.PaperSize = xlPaperLetter
+        '.FirstPageNumber = xlAutomatic
+        '.Order = xlDownThenOver
+        '.BlackAndWhite = False
+        .Zoom = False
+        .FitToPagesWide = InPagesWide
+        .FitToPagesTall = InPagesTall
+        '.PrintErrors = xlPrintErrorsDisplayed
+    End With
+    Application.INTERACTIVE = lbBKInteractive
+    Application.Visible = lbBKVisible
+    Application.ScreenUpdating = lbScreenUpdating
+End Sub
+
+Sub ShowAllSheets()
+    On Error Resume Next
+    BkScreenUpdating = Application.ScreenUpdating: Application.ScreenUpdating = False
+    For Each mySheet In Worksheets
+        Debug.Print mySheet.Index, mySheet.Name
+        mySheet.Visible = xlSheetVisible
+    Next
+    Application.ScreenUpdating = BkScreenUpdating
+End Sub
+
+Sub ToggleSheetTabs()
+    ActiveWindow.DisplayWorkbookTabs = Not ActiveWindow.DisplayWorkbookTabs
+End Sub
+
+Sub VisibleCellsOnly()
+    Selection.SpecialCells(xlCellTypeVisible).Select
+End Sub
+
+Sub ShowAllPrecedents()
+Dim c As Range
+For Each c In Selection
+    c.ShowPrecedents
+Next
+End Sub
+
+Sub ShowAllDependents()
+Dim c As Range
+For Each c In Selection
+    c.ShowDependents
+Next
+End Sub
+\\\--- END OF MODULE ---
+
+[ThisWorkbook] 3 líneas de código.
+///--- BEGINNING OF MODULE ---
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+    MyLibs.ExportToTxt ThisWorkbook
+End Sub
+\\\--- END OF MODULE ---
+
+[Sheet1] 0 líneas de código.
+///--- BEGINNING OF MODULE ---
+\\\--- END OF MODULE ---
+
+[Utils] 22 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+'Ayudantes para diversas funciones.
+'==================================================================================
+'
+Global Const PRINT_DEBUG_MSGS = True
+'
+'
+
+Function AssertActiveWindow()
+    AssertActiveWindow = Not ActiveWindow Is Nothing
+End Function
+
+'==================================================================================
+'Helper para debugear
+'==================================================================================
+Function PrintDebug(StrToPrint)
+    If PRINT_DEBUG_MSGS Then Debug.Print StrToPrint
+End Function
+
+Sub tst()
+    stSelection = foWBChooser.GetSelection()
+End Sub
+\\\--- END OF MODULE ---
+
+[UI] 3 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+'Funciones que ayudan a la presentación
+'==================================================================================
+\\\--- END OF MODULE ---
+
+[foWBChooser] 48 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+'Forma que va a listar los libros abiertos.
+'==================================================================================
+
+Private stSeleccion
+
+Private Sub cobuCancel_Click()
+    Me.Hide
+End Sub
+
+Private Sub cobuOk_Click()
+    ProcesaSeleccion
+End Sub
+
+Private Sub liboFiles_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
+    ProcesaSeleccion
+End Sub
+
+Private Sub ProcesaSeleccion()
+    stSeleccion = liboFiles.Value
+    Me.Hide
+End Sub
+
+Private Sub MyInit()
+    stSeleccion = ""
+    EnumWorkbooks
+End Sub
+
+'Enumera los libros abiertos. Exluimos los que se abren automático.
+Private Function EnumWorkbooks()
+    Const AUTO_PATH_SUBSTR = "XLSTART"
+    
+    Dim oWB As Workbook
+    
+    For Each oWB In Workbooks
+        If InStr(1, UCase(oWB.Path), AUTO_PATH_SUBSTR) = 0 Then
+            liboFiles.AddItem oWB.Name
+        End If
+    Next
+End Function
+
+Public Function GetSelection()
+    MyInit
+    
+    Me.Show
+    GetSelection = stSeleccion
+    Unload Me
+End Function
+\\\--- END OF MODULE ---
+
+[VC_COT] 149 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+'Importar y exportar los módulos comunes de VBA para los libros que sean cotizadores.
+'Util para control de versiones de los módulos.
+'==================================================================================
+
+Const VC_COMMON_PATH = "E:\Work\Cotizadores\Módulos"
+Const VC_IMPORT_PATH = VC_COMMON_PATH & "\DEV" 'Aquí se depositan los módulos
+Const VC_EXPORT_PATH = VC_COMMON_PATH & "\MAIN" 'De aquí se toman los módulos
+Const VC_MODULE_PREFIX = "_CODE"
+Const VC_FILE_EXTENSION = "BAS"
+Const VC_EXPORT_TOKEN = "'#EXPORT#" 'Si esta es la primera línea en los módulos, se procesan.
+
+Dim oFS As New Scripting.FileSystemObject
+
+'==================================================================================
+'Importa los módulos VBA de un libro.
+'==================================================================================
+Function GetModules()
+    'Seleccionamos el libro
+    stSelection = foWBChooser.GetSelection()
+    If stSelection = "" Or IsNull(stSelection) Then Exit Function
+    
+    Dim oVBComp As VBComponent
+    Dim oWB As Workbook
+    
+    Set oWB = Workbooks(stSelection)
+    
+    For Each oVBComp In oWB.VBProject.VBComponents
+        'Verificamos que la primera línea contenga la marca y que no sea un documento.
+        If UCase(Trim(oVBComp.CodeModule.Lines(1, 1))) = VC_EXPORT_TOKEN _
+        And oVBComp.Type <> vbext_ct_Document Then
+            sname = GenModuleFilename(oVBComp.Name)
+            sFullName = VC_IMPORT_PATH & "\" & sname & ""
+            
+            PrintDebug "Exportando módulo " & oVBComp.Name & " as " & sFullName
+            oVBComp.Export sFullName
+        End If
+    Next
+End Function
+
+'==================================================================================
+'Agrega los módulos a un libro.
+'==================================================================================
+Function PutModules()
+    'Seleccionamos el libro
+    stSelection = foWBChooser.GetSelection()
+    If stSelection = "" Or IsNull(stSelection) Then Exit Function
+    
+    Dim oFol As Folder
+    Dim oFil As File
+    Dim oWB As Workbook
+    
+    Set oWB = Workbooks(stSelection)
+    
+    Set oFol = oFS.GetFolder(VC_EXPORT_PATH)
+    For Each oFil In oFol.Files
+        'Filtramos los archivos con la extensión que nos interesa
+        If UCase(oFS.GetExtensionName(oFil.Name)) = VC_FILE_EXTENSION Then
+            ModName = GetModuleNameFromFile(oFil.Name)
+            'Si ya existe, lo reemplazamos..
+            If ModuleExists(oWB.VBProject, ModName) Then oWB.VBProject.VBComponents.Remove oWB.VBProject.VBComponents(ModName)
+            oWB.VBProject.VBComponents.Import oFil.Path
+        End If
+    Next
+    
+End Function
+
+'==================================================================================
+'Agrega los módulos a un libro, pero deja seleccionar cuales.
+'==================================================================================
+Function PutModulesFilter()
+    'Seleccionamos el libro
+    stSelection = foWBChooser.GetSelection()
+    If stSelection = "" Or IsNull(stSelection) Then Exit Function
+    
+    Dim oFol As Folder
+    Dim oFil As File
+    Dim oWB As Workbook
+    
+    Set oWB = Workbooks(stSelection)
+    
+    Set oFol = oFS.GetFolder(VC_EXPORT_PATH)
+    
+    '----------------------------------------------------------------------------------
+    'Primero vamos a contruir un arreglo con los nombres de los archivos que cumplan con el criterio.
+    Dim ArChivos()
+    ArChivos = Array()
+    For Each oFil In oFol.Files
+        'Filtramos los archivos con la extensión que nos interesa
+        If UCase(oFS.GetExtensionName(oFil.Name)) = VC_FILE_EXTENSION Then
+            'Los agregamos al arreglo
+            nNewIndex = UBound(ArChivos) + 1
+            ReDim Preserve ArChivos(nNewIndex)
+            ArChivos(nNewIndex) = oFil.Name
+        End If
+    Next
+    'En caso de que no haya archivos con el criterio. Suspendemos proceso.
+    If UBound(ArChivos) < 0 Then MsgBox "Ningún módulo para procesar." & vbCrLf & "Proceso terminado.", vbOKOnly + vbInformation: Exit Function
+
+    '----------------------------------------------------------------------------------
+    'Después vamos a filtrar aquellos módulos que nos interesen.
+    ArChivos = foOptionChooser.ChooseFrom(ArChivos)
+
+    'Si no se seleccionó ninguno:
+    'If UBound(ArChivos) < 0 Then MsgBox "Ningún módulo para procesar." & vbCrLf & "Proceso terminado.", vbOKOnly + vbInformation: Exit Function
+
+    '----------------------------------------------------------------------------------
+    'Por último se importan los módulos seleccionados.
+    For Each ActualFileName In ArChivos
+        ModName = GetModuleNameFromFile(CStr(ActualFileName))
+        sFullName = VC_EXPORT_PATH & "\" & ActualFileName
+        PrintDebug ModName & ", " & sFullName
+        'Si ya existe, lo reemplazamos..
+        If ModuleExists(oWB.VBProject, ModName) Then oWB.VBProject.VBComponents.Remove oWB.VBProject.VBComponents(ModName)
+        oWB.VBProject.VBComponents.Import sFullName
+    Next
+    
+    MsgBox "Proceso terminado.", vbOKOnly + vbInformation
+    
+End Function
+
+'==================================================================================
+'Construye el nombre del archivo que se va a usar para exportar/importar
+'==================================================================================
+Function GenModuleFilename(ModuleName$)
+    GenModuleFilename = ModuleName & VC_MODULE_PREFIX & "." & VC_FILE_EXTENSION
+End Function
+
+'==================================================================================
+'Extrae el nombre del módulo de un archivo (sin path)
+'==================================================================================
+Function GetModuleNameFromFile(FileName$)
+    sname = FileName
+    nprefixpos = InStr(1, sname, VC_MODULE_PREFIX)
+    GetModuleNameFromFile = Left(sname, nprefixpos - 1)
+End Function
+
+'==================================================================================
+'Indica si un módulo ya existe en el proyecto (Por nombre únicamente)
+'==================================================================================
+Function ModuleExists(oProject As VBProject, ModName)
+    Dim oVBComp As VBComponent
+    Dim bResult
+    
+    For Each oVBComp In oProject.VBComponents
+        If UCase(oVBComp.Name) = UCase(ModName) Then bResult = True: Exit For
+    Next
+    ModuleExists = bResult
+End Function
+\\\--- END OF MODULE ---
+
+[foOptionChooser] 76 líneas de código.
+///--- BEGINNING OF MODULE ---
+'==================================================================================
+'Forma que permite seleccionar una o más opciones.
+'Espera un arreglo de opciones, y regresa un arreglo con las opciones seleccionadas.
+'Por default selecciona todas las opciones proporcionadas (Transparente)
+'==================================================================================
+' Interfaz pública:
+' Public Function ChooseFrom(arOptions)
+'==================================================================================
+
+Private arResultado
+Private arSource
+
+Private Sub cobuCancel_Click()
+    Me.Hide
+End Sub
+
+Private Sub cobuOk_Click()
+    ProcesaSeleccion
+End Sub
+
+Private Sub cobuSelectAll_Click()
+    SelectAll
+End Sub
+
+Private Sub cobuSelectNone_Click()
+    SelectNone
+End Sub
+
+Private Sub SelectAll()
+    Debug.Print "SelectAll()"
+    For nc% = 0 To liboOptions.ListCount - 1
+        liboOptions.Selected(nc) = True
+    Next
+End Sub
+
+Private Sub SelectNone()
+    For nc% = 0 To liboOptions.ListCount - 1
+        liboOptions.Selected(nc) = False
+    Next
+End Sub
+
+Private Sub MyInit()
+    arResultado = Array()
+    liboOptions.Clear
+    For Each elem In arSource
+        liboOptions.AddItem (elem)
+        liboOptions.Selected(liboOptions.ListCount - 1) = True 'Vamos seleccionando conforme vamos añadiendo.
+    Next
+End Sub
+
+Private Function ProcesaSeleccion()
+    For nc% = 0 To liboOptions.ListCount - 1
+        If liboOptions.Selected(nc) Then
+            nNewIndex = UBound(arResultado) + 1
+            ReDim Preserve arResultado(nNewIndex)
+            arResultado(nNewIndex) = liboOptions.List(nc)
+        End If
+    Next
+    Me.Hide
+End Function
+
+Public Function ChooseFrom(arOptions)
+    If Not IsArray(arOptions) Then arOptions = Array(arOptions) 'Para que no truene y sólo presente la opción.
+    arSource = arOptions
+    
+    MyInit 'Limpia la lista de opciones y la llena con los datos proporcionados.
+    
+    Me.Show
+    If IsEmpty(arResultado) Then 'Por si se cierra la ventana con el cuadro de control en lugar de con los botones
+        ChooseFrom = Array() 'Arreglo vacío, equivalente a nada seleccionado.
+    Else
+        ChooseFrom = arResultado
+    End If
+    Unload Me
+End Function
+
+\\\--- END OF MODULE ---
+
+[RemoveInternalPasswords] 18 líneas de código.
+///--- BEGINNING OF MODULE ---
+'Abre el libro AllInternalPasswords.xls que contiene todas las macros y componentes para eliminar las contraseñas internas de libros excel 2003 y anteriores.
+Option Explicit
+
+Const BOOK_PATH As String = "..\OtherBooks\allinternalpasswords.xls" 'Ruta relativa hacia el libro.
+
+Sub RemoveInternalPasswords()
+    Dim LibroActivo As Workbook, LibroContraseñas As Workbook
+    
+    Set LibroActivo = ActiveWorkbook
+    Set LibroContraseñas = Workbooks.Open(ThisWorkbook.Path & "\" & BOOK_PATH)
+    
+    LibroActivo.Activate
+    MsgBox "Se removerán las contraseñas de protección del libro y las hojas, si existen." & vbNewLine & vbNewLine & "Por favor espere. " & vbNewLine & "El proceso puede tardar algunos minutos.", vbOKOnly, "Remove Internal Passwords"
+    Application.Run (LibroContraseñas.Name & "!RemoveAll")
+    MsgBox "Proceso terminado.", vbOKOnly, "Remove Internal Passwords"
+    
+    LibroContraseñas.Close False
+End Sub
+\\\--- END OF MODULE ---
+
+[ReplaceByRange] 41 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Module    : ReplaceByRange
+' Author    : +
+' Date      : 1/08/2012
+' Purpose   : Implementa una función para realizar varios Search & Replace dentro de una hoja.
+'             Se seleccionan tres áreas. Las primeras dos deben de ser del mismo tamaño.
+'             La primer área contiene los valores a buscar.
+'             La segunda área contiene los valores para reemplazar.
+'             La tercer área es en donde se realizan los search & replace.
+'
+'             La función principal es ReplaceByRange()
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+
+Sub ReplaceByRange()
+    If Selection.Areas.Count <> 3 Then
+        MsgBox "Deben de seleccionarse 3 areas.", vbOKOnly + vbExclamation
+        Exit Sub
+    End If
+    
+    If Selection.Areas(1).Cells.Count <> Selection.Areas(2).Cells.Count Then
+        MsgBox "El área 1 y 2 deben de tener el mismo número de celdas.", vbOKOnly + vbExclamation
+        Exit Sub
+    End If
+    
+    ReplaceByRangeWorker Selection.Areas(1), _
+                         Selection.Areas(2), _
+                         Selection.Areas(3)
+End Sub
+
+Sub ReplaceByRangeWorker(FindWhat As Range, ReplaceWith As Range, SearchWhere As Range)
+    Dim i As Long
+    Dim Que As String, ConQue As String
+    
+    For i = 1 To FindWhat.Cells.Count
+        Que = FindWhat.Cells(i).Value
+        ConQue = ReplaceWith.Cells(i).Value
+        SearchWhere.Replace Que, ConQue
+    Next i
+End Sub
+\\\--- END OF MODULE ---
+
+[MyLibs] 44 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Module    : MyLibs
+' Author    : +
+' Date      : 04/06/2013
+' Purpose   : Módulo que va a servir de pegamento entre este archivo de Macros Personales y los diferentes archivos con librerías.
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+
+'====================================================================================================
+' Uso de ExportToTxt
+'====================================================================================================
+'En los libros que se quiera exportar a texto, agregar el siguiente estatuto en su evento Workbook.BeforeSave:
+'Application.Run "Personal.xlsb!MyLibs.ExportToTxt", ThisWorkbook
+'====================================================================================================
+
+'Ejemplo de la rutina (Y el módulo) que debe de estar presente en el Archivo de Macros Personales para correr la funcionalidad.
+Public Sub ExportToTxt(book As Workbook)
+    CorreRutina "ExportToTxt", book
+End Sub
+
+Public Sub ExportToTxtConConfirmacion()
+    CorreRutina "ExportToTxtConConfirmacion", ActiveWorkbook
+End Sub
+
+Public Sub CorreRutina(rutina As String, book As Workbook)
+On Error GoTo CorreRutina_Error
+    Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
+    BL.SetCalculation (xlCalculationManual)
+    BL.ErrNum = 0: BL.OpenLibBook ("ExportToTxt.xls")
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+
+    Dim NombreCompletoMacro As String 'Determinamos el nombre completo de la macro a correr
+    NombreCompletoMacro = "ExportToTxt.xls!ExportToTxt." & rutina
+    
+    Application.Run NombreCompletoMacro, book
+
+On Error GoTo 0
+Exit Sub
+
+CorreRutina_Error:
+    Debug.Print "*** Ocurrió un error en la rutina Personal!MyLibs.CorreRutina"
+    Debug.Print "*** Error No: " & Err.Number & ". " & Err.Description
+End Sub
+\\\--- END OF MODULE ---
+
+[BookLoaderClass] 84 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Private Const LIB_PATH As String = "MyLibs" 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
+'----------------------------------------------------------------------------------------------------
+
+Private CurrentActiveBook As Workbook
+Private SummonedBook As Workbook
+Private LeaveBookOpenOnTerminate As Boolean
+Private BackupCalculationMode As XlCalculation
+
+Private FSO As New Scripting.FileSystemObject
+
+Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
+
+'Abre un libro a partir de la ruta completa. Deja activo el libro que lo estaba cuando se llama.
+Public Sub OpenBook(bookFilenameFullPath As String)
+    SaveCurrentBook
+
+    Dim JustName As String: JustName = FSO.GetFileName(bookFilenameFullPath)
+    If BookAlreadyOpen(JustName) Then
+        LeaveBookOpenOnTerminate = True
+        Set SummonedBook = Workbooks(JustName)
+    Else
+        Set SummonedBook = Workbooks.Open(bookFilenameFullPath)
+    End If
+    
+    RestoreCurrentBook
+End Sub
+
+'Un Lib book es relativo al libro actual. Se le concatena la ruta al directorio de las librerías.
+'Como es un método público de una clase, vamos a usar el modelo de manejo de errores de los delegados...
+Public Sub OpenLibBook(bookFileName As String)
+On Error GoTo DelegateError
+    Dim PathCompleta As String
+    PathCompleta = FSO.BuildPath(ThisWorkbook.Path, LIB_PATH)
+    PathCompleta = FSO.BuildPath(PathCompleta, FSO.GetBaseName(bookFileName))
+    PathCompleta = FSO.BuildPath(PathCompleta, bookFileName)
+    OpenBook (PathCompleta)
+DelegateError:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Sub
+
+Private Sub SaveCurrentBook()
+    Set CurrentActiveBook = ActiveWorkbook
+End Sub
+
+Private Sub RestoreCurrentBook()
+    On Error Resume Next
+    CurrentActiveBook.Activate 'Puede fallar si el libro está oculto (en la ventana de Excel)
+    On Error GoTo 0
+End Sub
+
+Private Sub CloseBook()
+    If Not SummonedBook Is Nothing Then SummonedBook.Close False
+    Set SummonedBook = Nothing
+End Sub
+
+'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
+Private Sub Class_Terminate()
+    If Not LeaveBookOpenOnTerminate Then CloseBook
+    If BackupCalculationMode <> 0 Then RestoreCalculation
+End Sub
+
+'Determina si hay un libro abierto por nombre
+Private Function BookAlreadyOpen(bookName As String) As Boolean
+On Error GoTo NotOpen
+    Dim BookToTest: Set BookToTest = Workbooks(bookName)
+    BookAlreadyOpen = True 'No tronó: se encontró el libro.
+    Exit Function
+NotOpen:
+    BookAlreadyOpen = False
+End Function
+
+'Asigna el módo de cálculo, y guarda el actual, para poder recuperarlo posteriormente.
+Public Sub SetCalculation(calcMode As XlCalculation)
+    On Error Resume Next 'Estos dos estatutos pueden fallar si todos los libros abiertos en excel están ocultos sin ventana visible.
+    BackupCalculationMode = Application.Calculation
+    Application.Calculation = calcMode
+End Sub
+
+Private Sub RestoreCalculation()
+    On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
+    Application.Calculation = BackupCalculationMode
+End Sub
+\\\--- END OF MODULE ---
+
+
+** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
