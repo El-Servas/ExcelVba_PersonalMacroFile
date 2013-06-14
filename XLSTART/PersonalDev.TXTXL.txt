@@ -1,4 +1,19 @@
 Representación Textual del archivo de Excel: "PersonalDev.XLSB"
+Fecha y hora de generación: 14/06/2013 04:27:48 p.m.
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 13
+
+ * Líneas de código VB: 620
+
+Detalle
+=======
 
 Hojas:
  [Sheet1]
@@ -481,7 +496,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[RemoveInternalPasswords] 18 líneas de código.
+[RemoveInternalPasswords] 14 líneas de código.
 ///--- BEGINNING OF MODULE ---
 'Abre el libro AllInternalPasswords.xls que contiene todas las macros y componentes para eliminar las contraseñas internas de libros excel 2003 y anteriores.
 Option Explicit
@@ -489,17 +504,13 @@ Option Explicit
 Const BOOK_PATH As String = "..\OtherBooks\allinternalpasswords.xls" 'Ruta relativa hacia el libro.
 
 Sub RemoveInternalPasswords()
-    Dim LibroActivo As Workbook, LibroContraseñas As Workbook
-    
-    Set LibroActivo = ActiveWorkbook
-    Set LibroContraseñas = Workbooks.Open(ThisWorkbook.Path & "\" & BOOK_PATH)
-    
-    LibroActivo.Activate
+    Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
+    BL.ErrNum = 0: BL.OpenLibBook ("InternalPasswordsRemover.xls")
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+
     MsgBox "Se removerán las contraseñas de protección del libro y las hojas, si existen." & vbNewLine & vbNewLine & "Por favor espere. " & vbNewLine & "El proceso puede tardar algunos minutos.", vbOKOnly, "Remove Internal Passwords"
-    Application.Run (LibroContraseñas.Name & "!RemoveAll")
+    Application.Run BL.GetFunctionName
     MsgBox "Proceso terminado.", vbOKOnly, "Remove Internal Passwords"
-    
-    LibroContraseñas.Close False
 End Sub
 \\\--- END OF MODULE ---
 
@@ -548,7 +559,7 @@ Sub ReplaceByRangeWorker(FindWhat As Range, ReplaceWith As Range, SearchWhere As
 End Sub
 \\\--- END OF MODULE ---
 
-[MyLibs] 44 líneas de código.
+[MyLibs] 37 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : MyLibs
@@ -562,46 +573,36 @@ Option Explicit
 '====================================================================================================
 ' Uso de ExportToTxt
 '====================================================================================================
-'En los libros que se quiera exportar a texto, agregar el siguiente estatuto en su evento Workbook.BeforeSave:
+'En los libros que se quiera exportar a texto automáticamente al grabar, agregar el siguiente estatuto en su evento Workbook.BeforeSave:
 'Application.Run "Personal.xlsb!MyLibs.ExportToTxt", ThisWorkbook
+'
+'Para exportar en demanda, ejecutar la rutina ExportToTxtConConfirmacion, y se exportará el libro activo.
 '====================================================================================================
 
-'Ejemplo de la rutina (Y el módulo) que debe de estar presente en el Archivo de Macros Personales para correr la funcionalidad.
-Public Sub ExportToTxt(book As Workbook)
-    CorreRutina "ExportToTxt", book
-End Sub
-
-Public Sub ExportToTxtConConfirmacion()
-    CorreRutina "ExportToTxtConConfirmacion", ActiveWorkbook
-End Sub
-
-Public Sub CorreRutina(rutina As String, book As Workbook)
-On Error GoTo CorreRutina_Error
-    Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
+Public Sub ExportToTxt(book As Workbook, Optional visual As Boolean = False)
+On Error GoTo ExportToTxt_Error
+    Dim BL As New BookLoaderClass
     BL.SetCalculation (xlCalculationManual)
     BL.ErrNum = 0: BL.OpenLibBook ("ExportToTxt.xls")
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
-
-    Dim NombreCompletoMacro As String 'Determinamos el nombre completo de la macro a correr
-    NombreCompletoMacro = "ExportToTxt.xls!ExportToTxt." & rutina
     
-    Application.Run NombreCompletoMacro, book
-
+    Application.Run "ExportToTxt.xls!ExportToTxt.ExportToTxt", book, visual
 On Error GoTo 0
 Exit Sub
-
-CorreRutina_Error:
+ExportToTxt_Error:
     Debug.Print "*** Ocurrió un error en la rutina Personal!MyLibs.CorreRutina"
     Debug.Print "*** Error No: " & Err.Number & ". " & Err.Description
 End Sub
+
+Public Sub ExportToTxtConConfirmacion()
+    ExportToTxt ActiveWorkbook, True
+End Sub
+
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 84 líneas de código.
+[BookLoaderClass] 88 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
-
-Private Const LIB_PATH As String = "MyLibs" 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
-'----------------------------------------------------------------------------------------------------
 
 Private CurrentActiveBook As Workbook
 Private SummonedBook As Workbook
@@ -681,18 +682,35 @@ End Sub
 Private Sub RestoreCalculation()
     On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
     Application.Calculation = BackupCalculationMode
+    On Error GoTo 0
 End Sub
+
+'Las constantes de esta funcion están definidas en el módulo Config.
+Public Function GetFunctionName(Optional rutina As String = LIB_MAIN_FUNCTION_NAME) As String
+    GetFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
+End Function
+
 \\\--- END OF MODULE ---
 
-[Config] 7 líneas de código.
+[Config] 17 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo de macros personales
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : 0.1 - 2013-06-12
+' Version   : v0.2.1 - 2013-06-12
 '---------------------------------------------------------------------------------------
+
+'Path relativa al libro actual en donde se encuentran los archivos de librerías.
+Public Const LIB_PATH As String = "..\MyLibs"
+
+'El nombre del módulo principal en los archivos de librerías.
+Public Const LIB_MODULE_NAME As String = "Lib"
+
+'El nombre de la función principal dentro del módulo de librería.
+Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
+
 \\\--- END OF MODULE ---
 
 
