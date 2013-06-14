@@ -1,4 +1,19 @@
 Representación Textual del archivo de Excel: "PersonalDev.XLSB"
+Fecha y hora de generación: 14/06/2013 03:40:50 p.m.
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 13
+
+ * Líneas de código VB: 627
+
+Detalle
+=======
 
 Hojas:
  [Sheet1]
@@ -592,7 +607,7 @@ CorreRutina_Error:
 End Sub
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 87 líneas de código.
+[BookLoaderClass] 88 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -674,6 +689,7 @@ End Sub
 Private Sub RestoreCalculation()
     On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
     Application.Calculation = BackupCalculationMode
+    On Error GoTo 0
 End Sub
 
 'Las constantes de esta funcion están definidas en el módulo Config.
@@ -705,4 +721,4 @@ Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 \\\--- END OF MODULE ---
 
 
-** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
+** Fin del proceso de exportación. Proceso realizado en 0.02 minutos. **
