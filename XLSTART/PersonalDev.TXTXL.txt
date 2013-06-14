@@ -1,5 +1,4 @@
 Representación Textual del archivo de Excel: "PersonalDev.XLSB"
-Fecha y hora de generación: 14/06/2013 04:27:48 p.m.
 
 Resumen
 =======
@@ -586,7 +585,7 @@ On Error GoTo ExportToTxt_Error
     BL.ErrNum = 0: BL.OpenLibBook ("ExportToTxt.xls")
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
     
-    Application.Run "ExportToTxt.xls!ExportToTxt.ExportToTxt", book, visual
+    Application.Run BL.GetFunctionName, book, visual
 On Error GoTo 0
 Exit Sub
 ExportToTxt_Error:
@@ -699,7 +698,7 @@ End Function
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : v0.2.1 - 2013-06-12
+' Version   : POST v0.2.1 - 2013-06-12
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
@@ -714,4 +713,5 @@ Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 \\\--- END OF MODULE ---
 
 
-** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
+** Fin del proceso de exportación. **
+Lib_ExportToTxt [ExportToTxt.xls] v2.9 - 2013-06-14
