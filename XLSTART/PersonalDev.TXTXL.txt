@@ -1,5 +1,5 @@
 Representación Textual del archivo de Excel: "PersonalDev.XLSB"
-Fecha y hora de generación: 14/06/2013 04:17:43 p.m.
+Fecha y hora de generación: 14/06/2013 04:27:48 p.m.
 
 Resumen
 =======
@@ -687,7 +687,7 @@ End Sub
 
 'Las constantes de esta funcion están definidas en el módulo Config.
 Public Function GetFunctionName(Optional rutina As String = LIB_MAIN_FUNCTION_NAME) As String
-    GetMainFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
+    GetFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
 End Function
 
 \\\--- END OF MODULE ---
@@ -699,7 +699,7 @@ End Function
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : v0.2 - 2013-06-12
+' Version   : v0.2.1 - 2013-06-12
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
