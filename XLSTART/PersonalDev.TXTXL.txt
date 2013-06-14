@@ -1,5 +1,5 @@
 Representación Textual del archivo de Excel: "PersonalDev.XLSB"
-Fecha y hora de generación: 14/06/2013 03:40:50 p.m.
+Fecha y hora de generación: 14/06/2013 03:54:09 p.m.
 
 Resumen
 =======
@@ -710,7 +710,7 @@ End Function
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
-Public Const LIB_PATH As String = "MyLibs"
+Public Const LIB_PATH As String = "..\MyLibs"
 
 'El nombre del módulo principal en los archivos de librerías.
 Public Const LIB_MODULE_NAME As String = "Lib"
@@ -721,4 +721,4 @@ Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 \\\--- END OF MODULE ---
 
 
-** Fin del proceso de exportación. Proceso realizado en 0.02 minutos. **
+** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
