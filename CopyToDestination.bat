@@ -1,3 +1,4 @@
-ren PersonalDev.* Personal.*
-copy "Personal.*" "%appdata%\Microsoft\Excel"
+copy XLSTART\PersonalDev.* Personal.*
+del *.TXTXL.TXT
+copy "Personal.*" "%appdata%\Microsoft\Excel\XLSTART"
 del Personal.*
