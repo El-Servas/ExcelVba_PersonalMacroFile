@@ -7,9 +7,9 @@ Resumen
 
  * Nombres Definidos: 0
 
- * Módulos de Visual Basic: 13
+ * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 666
+ * Líneas de código VB: 721
 
 Detalle
 =======
@@ -38,6 +38,8 @@ Módulos VBA:
  [MyLibs] Tipo: 1
  [BookLoaderClass] Tipo: 2
  [Config] Tipo: 1
+ [UtilsClass] Tipo: 2
+ [RunHelperClass] Tipo: 2
 
 Codigo:
 [Interactive] 122 líneas de código.
@@ -562,7 +564,7 @@ Sub ReplaceByRangeWorker(FindWhat As Range, ReplaceWith As Range, SearchWhere As
 End Sub
 \\\--- END OF MODULE ---
 
-[MyLibs] 37 líneas de código.
+[MyLibs] 38 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : MyLibs
@@ -584,10 +586,11 @@ Option Explicit
 
 Public Sub ExportToTxt(book As Workbook, Optional visual As Boolean = False)
 On Error GoTo ExportToTxt_Error
-    Dim BL As New BookLoaderClass
-    BL.SetCalculation (xlCalculationManual)
-    BL.ErrNum = 0: BL.OpenLibBook ("ExportToTxt.xls")
-    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    Dim RH As New RunHelperClass
+    RH.SetCalculation (xlCalculationManual)
+    Dim BL 'Para tener la referencia a la instancia de BookLoader y cuando se destruya, cierre el libro.
+    RH.ErrNum = 0: Set BL = RH.OpenLibBook("ExportToTxt.xls")
+    If RH.ErrNum <> 0 Then Err.Raise RH.ErrNum, , RH.ErrDesc
     
     Application.Run BL.GetFunctionName, book, visual
 On Error GoTo 0
@@ -603,14 +606,13 @@ End Sub
 
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 89 líneas de código.
+[BookLoaderClass] 75 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
 Private CurrentActiveBook As Workbook
 Private SummonedBook As Workbook
 Private LeaveBookOpenOnTerminate As Boolean
-Private BackupCalculationMode As XlCalculation
 
 Private FSO As New Scripting.FileSystemObject
 
@@ -662,8 +664,8 @@ End Sub
 
 'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
 Private Sub Class_Terminate()
+    Debug.Print "BookLoaderClass.Terminate()"
     If Not LeaveBookOpenOnTerminate Then CloseBook
-    If BackupCalculationMode <> 0 Then RestoreCalculation
 End Sub
 
 'Determina si hay un libro abierto por nombre
@@ -676,19 +678,6 @@ NotOpen:
     BookAlreadyOpen = False
 End Function
 
-'Asigna el módo de cálculo, y guarda el actual, para poder recuperarlo posteriormente.
-Public Sub SetCalculation(calcMode As XlCalculation)
-    On Error Resume Next 'Estos dos estatutos pueden fallar si todos los libros abiertos en excel están ocultos sin ventana visible.
-    BackupCalculationMode = Application.Calculation
-    Application.Calculation = calcMode
-End Sub
-
-Private Sub RestoreCalculation()
-    On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
-    Application.Calculation = BackupCalculationMode
-    On Error GoTo 0
-End Sub
-
 'Las constantes de esta funcion están definidas en el módulo Config.
 Public Function GetFunctionName(Optional rutina As String = LIB_MAIN_FUNCTION_NAME) As String
     GetFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
@@ -696,7 +685,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[Config] 58 líneas de código.
+[Config] 48 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo Personal de Macros (APM)
@@ -715,26 +704,13 @@ Public Const LIB_MODULE_NAME As String = "Lib"
 'El nombre de la función principal dentro del módulo de librería.
 Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 
-'Para construir la ruta al folder de Auto Start:
-Private Const AUTO_START_PATH_PREFIX As String = "AppData"
-Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
-
-Public Function GetFSO() As FileSystemObject
-    Set GetFSO = New FileSystemObject
-End Function
-
-Public Function GetAutoStartPath() As String
-    GetAutoStartPath = GetFSO().BuildPath(Environ(AUTO_START_PATH_PREFIX), AUTO_START_PATH_SUFFIX)
-End Function
-
-Public Function IsAutoStartPath(path As String) As Boolean
-    If UCase(path) = UCase(GetAutoStartPath()) Then IsAutoStartPath = True
-End Function
+Private UC As New UtilsClass
 
 Public Sub ConfigMacroShortcuts()
 On Error GoTo CMS_Error
+    Debug.Print "-----------------------------------------------------------"
     Debug.Print "Asignando los shortcuts a las macros."
-    If IsAutoStartPath(ThisWorkbook.path) Then
+    If UC.IsAutoStartPath(ThisWorkbook.path) Then
         ShortcutsPrd
     Else
         ShortcutsDev
@@ -742,20 +718,109 @@ On Error GoTo CMS_Error
     Debug.Print "Listo. Grabando..."
     ThisWorkbook.Save
     Debug.Print "Listo."
+    Debug.Print
+    Debug.Print "Terminada la inicialización de los shortcuts de las macros."
+    Debug.Print "-----------------------------------------------------------"
 Exit Sub
 CMS_Error:
     Debug.Print "Error en ConfigMacroShortcuts: " & Err.Number & " " & Err.Description
 End Sub
 
 Private Sub ShortcutsPrd()
-    Debug.Print "Usando los shortcuts de Prd."
+    Debug.Print "> Usando los shortcuts de Prd."
     Application.MacroOptions Macro:=ThisWorkbook.Name & "!ExportToTxtConConfirmacion", ShortcutKey:="t"
 End Sub
 
 Private Sub ShortcutsDev()
-    Debug.Print "Usando los shortcuts de Dev."
+    Debug.Print "> Usando los shortcuts de Dev."
     Application.MacroOptions Macro:=ThisWorkbook.Name & "!ExportToTxtConConfirmacion", ShortcutKey:="r"
 End Sub
+\\\--- END OF MODULE ---
+
+[UtilsClass] 32 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Module    : UtilsClass
+' Author    : +
+' Date      : 17/06/2013
+' Purpose   : Clase con métodos ayudantes y utilitarios.
+'---------------------------------------------------------------------------------------
+Option Explicit
+
+'Para construir la ruta al folder de Auto Start:
+Private Const AUTO_START_PATH_PREFIX As String = "AppData" 'Variable de entorno a expandir.
+Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un nuevo objeto FileSystemObject
+'----------------------------------------------------------------------------------------------------
+Public Function GetFSO() As FileSystemObject
+    Set GetFSO = New FileSystemObject
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Obtiene la ruta de Auto Start, expandiendo la variable de entorno correspondiente.
+'----------------------------------------------------------------------------------------------------
+Public Function GetAutoStartPath() As String
+    GetAutoStartPath = GetFSO().BuildPath(Environ(AUTO_START_PATH_PREFIX), AUTO_START_PATH_SUFFIX)
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Compara una ruta proporcionada y regresa verdadero si es la ruta de Auto Start de Excel.
+'----------------------------------------------------------------------------------------------------
+Public Function IsAutoStartPath(path As String) As Boolean
+    If UCase(path) = UCase(GetAutoStartPath()) Then IsAutoStartPath = True
+End Function
+\\\--- END OF MODULE ---
+
+[RunHelperClass] 46 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Module    : RunHelperClass
+' Author    : +
+' Date      : 17/06/2013
+' Purpose   : Clase que va a servir como apoyo a los "servicios" que provee el APM.
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+
+Private BackupCalculationMode As XlCalculation 'Para guardar el modo de cálculo.
+
+Private Utils As New UtilsClass
+
+Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
+
+Public Function GetUtils() As UtilsClass
+    Set GetUtilsClass = Utils 'Recicla la misma instancia...
+End Function
+
+'Asigna el módo de cálculo, y guarda el actual, para poder recuperarlo posteriormente.
+Public Sub SetCalculation(calcMode As XlCalculation)
+    On Error Resume Next 'Estos dos estatutos pueden fallar si todos los libros abiertos en excel están ocultos sin ventana visible.
+    BackupCalculationMode = Application.Calculation
+    Application.Calculation = calcMode
+End Sub
+
+Private Sub RestoreCalculation()
+    On Error Resume Next 'Puede fallar si no hay ventanas de libros en Excel. (O si falló en SetCalculation())
+    Application.Calculation = BackupCalculationMode
+    On Error GoTo 0
+End Sub
+
+Private Sub Class_Terminate()
+    Debug.Print "RunHelperClass.Terminate()"
+    If BackupCalculationMode <> 0 Then RestoreCalculation
+End Sub
+
+Public Function OpenLibBook(bookFileName As String) As BookLoaderClass
+On Error GoTo DelegateError
+    Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
+    BL.ErrNum = 0: BL.OpenLibBook (bookFileName)
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    Set OpenLibBook = BL
+DelegateError:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
 \\\--- END OF MODULE ---
 
 
