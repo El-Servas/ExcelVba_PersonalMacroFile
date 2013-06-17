@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 13
 
- * Líneas de código VB: 620
+ * Líneas de código VB: 666
 
 Detalle
 =======
@@ -166,10 +166,14 @@ Next
 End Sub
 \\\--- END OF MODULE ---
 
-[ThisWorkbook] 3 líneas de código.
+[ThisWorkbook] 7 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
     MyLibs.ExportToTxt ThisWorkbook
+End Sub
+
+Private Sub Workbook_Open()
+    ConfigMacroShortcuts
 End Sub
 \\\--- END OF MODULE ---
 
@@ -247,7 +251,7 @@ Private Function EnumWorkbooks()
     Dim oWB As Workbook
     
     For Each oWB In Workbooks
-        If InStr(1, UCase(oWB.Path), AUTO_PATH_SUBSTR) = 0 Then
+        If InStr(1, UCase(oWB.path), AUTO_PATH_SUBSTR) = 0 Then
             liboFiles.AddItem oWB.Name
         End If
     Next
@@ -325,7 +329,7 @@ Function PutModules()
             ModName = GetModuleNameFromFile(oFil.Name)
             'Si ya existe, lo reemplazamos..
             If ModuleExists(oWB.VBProject, ModName) Then oWB.VBProject.VBComponents.Remove oWB.VBProject.VBComponents(ModName)
-            oWB.VBProject.VBComponents.Import oFil.Path
+            oWB.VBProject.VBComponents.Import oFil.path
         End If
     Next
     
@@ -599,7 +603,7 @@ End Sub
 
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 88 líneas de código.
+[BookLoaderClass] 89 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -623,6 +627,7 @@ Public Sub OpenBook(bookFilenameFullPath As String)
     Else
         Set SummonedBook = Workbooks.Open(bookFilenameFullPath)
     End If
+    If SummonedBook Is Nothing Then Err.Raise vbObjectError + 1, , "No se abrió el archivo de librería [" & JustName & "]"
     
     RestoreCurrentBook
 End Sub
@@ -632,7 +637,7 @@ End Sub
 Public Sub OpenLibBook(bookFileName As String)
 On Error GoTo DelegateError
     Dim PathCompleta As String
-    PathCompleta = FSO.BuildPath(ThisWorkbook.Path, LIB_PATH)
+    PathCompleta = FSO.BuildPath(ThisWorkbook.path, LIB_PATH)
     PathCompleta = FSO.BuildPath(PathCompleta, FSO.GetBaseName(bookFileName))
     PathCompleta = FSO.BuildPath(PathCompleta, bookFileName)
     OpenBook (PathCompleta)
@@ -691,14 +696,14 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[Config] 17 líneas de código.
+[Config] 58 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
-' File      : Archivo de macros personales
+' File      : Archivo Personal de Macros (APM)
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : v1.1 - 2013-06-14
+' Version   : v1.2 - 2013-06-14
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
@@ -710,6 +715,47 @@ Public Const LIB_MODULE_NAME As String = "Lib"
 'El nombre de la función principal dentro del módulo de librería.
 Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 
+'Para construir la ruta al folder de Auto Start:
+Private Const AUTO_START_PATH_PREFIX As String = "AppData"
+Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
+
+Public Function GetFSO() As FileSystemObject
+    Set GetFSO = New FileSystemObject
+End Function
+
+Public Function GetAutoStartPath() As String
+    GetAutoStartPath = GetFSO().BuildPath(Environ(AUTO_START_PATH_PREFIX), AUTO_START_PATH_SUFFIX)
+End Function
+
+Public Function IsAutoStartPath(path As String) As Boolean
+    If UCase(path) = UCase(GetAutoStartPath()) Then IsAutoStartPath = True
+End Function
+
+Public Sub ConfigMacroShortcuts()
+On Error GoTo CMS_Error
+    Debug.Print "Asignando los shortcuts a las macros."
+    If IsAutoStartPath(ThisWorkbook.path) Then
+        ShortcutsPrd
+    Else
+        ShortcutsDev
+    End If
+    Debug.Print "Listo. Grabando..."
+    ThisWorkbook.Save
+    Debug.Print "Listo."
+Exit Sub
+CMS_Error:
+    Debug.Print "Error en ConfigMacroShortcuts: " & Err.Number & " " & Err.Description
+End Sub
+
+Private Sub ShortcutsPrd()
+    Debug.Print "Usando los shortcuts de Prd."
+    Application.MacroOptions Macro:=ThisWorkbook.Name & "!ExportToTxtConConfirmacion", ShortcutKey:="t"
+End Sub
+
+Private Sub ShortcutsDev()
+    Debug.Print "Usando los shortcuts de Dev."
+    Application.MacroOptions Macro:=ThisWorkbook.Name & "!ExportToTxtConConfirmacion", ShortcutKey:="r"
+End Sub
 \\\--- END OF MODULE ---
 
 
