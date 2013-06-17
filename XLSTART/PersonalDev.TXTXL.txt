@@ -698,7 +698,7 @@ End Function
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : POST v1.0 - 2013-06-14
+' Version   : v1.1 - 2013-06-14
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
@@ -714,4 +714,4 @@ Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.9 - 2013-06-14
+Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
