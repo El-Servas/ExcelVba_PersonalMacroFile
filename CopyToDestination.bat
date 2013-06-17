@@ -5,7 +5,8 @@ echo estándar.
 echo.
 echo Cualquier tecla para continuar, Ctrl-C para cancelar.
 echo ==============================================================================
-pause
+echo.
+pause > nul
 
 echo ==============================================================================
 echo Copiando Archivo Personal de Macros a:
@@ -24,13 +25,16 @@ echo ===========================================================================
 echo DENTRO DE EXCEL, RE-ASIGNAR LOS ACCESOS DIRECTOS A LAS MACROS QUE LAS TUVIERAN
 echo ==============================================================================
 echo.
+echo Presione cualquier tecla para copiar las librerías, Ctrl-C para cancelar.
+echo.
+pause > nul
 
 echo ------------------------------------------------------------------------------
 echo Copiando librerias...
 echo.
 
-XCOPY MyLibs\*.* %appdata%\Microsoft\Excel\XLSTART\MyLibs /I /S /Y /Q /EXCLUDE:xcopy.ignore
+XCOPY MyLibs\*.* %appdata%\Microsoft\Excel\MyLibs /I /S /Y /Q /EXCLUDE:xcopy.ignore
 
 echo Listo.
 echo.
-pause
+pause > nul
