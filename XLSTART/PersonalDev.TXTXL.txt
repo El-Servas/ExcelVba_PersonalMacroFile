@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 756
+ * Líneas de código VB: 757
 
 Detalle
 =======
@@ -685,7 +685,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[Config] 64 líneas de código.
+[Config] 65 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo Personal de Macros (APM)
@@ -712,6 +712,8 @@ Private UC As New UtilsClass
 Public Sub ConfigMacroShortcuts()
 On Error GoTo CMS_Error
     Debug.Print "-----------------------------------------------------------"
+    Debug.Print "Archivo Personal de Macros: ConfigMacroShortcuts()"
+    Debug.Print "-----------------------------------------------------------"
     Debug.Print "Asignando los shortcuts a las macros."
     
     'Agregamos verificación de libros visibles.
@@ -734,7 +736,6 @@ On Error GoTo CMS_Error
     ThisWorkbook.Save
     Application.EnableEvents = BkEnableEvents
     
-    Debug.Print "Listo."
     Debug.Print "Terminada la inicialización de los shortcuts de las macros."
     Debug.Print "-----------------------------------------------------------"
 Exit Sub
