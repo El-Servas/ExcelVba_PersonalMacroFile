@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 729
+ * Líneas de código VB: 756
 
 Detalle
 =======
@@ -237,7 +237,7 @@ Private Sub liboFiles_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
 End Sub
 
 Private Sub ProcesaSeleccion()
-    stSeleccion = liboFiles.Value
+    stSeleccion = liboFiles.value
     Me.Hide
 End Sub
 
@@ -557,8 +557,8 @@ Sub ReplaceByRangeWorker(FindWhat As Range, ReplaceWith As Range, SearchWhere As
     Dim Que As String, ConQue As String
     
     For i = 1 To FindWhat.Cells.Count
-        Que = FindWhat.Cells(i).Value
-        ConQue = ReplaceWith.Cells(i).Value
+        Que = FindWhat.Cells(i).value
+        ConQue = ReplaceWith.Cells(i).value
         SearchWhere.Replace Que, ConQue
     Next i
 End Sub
@@ -685,7 +685,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[Config] 56 líneas de código.
+[Config] 64 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo Personal de Macros (APM)
@@ -713,6 +713,14 @@ Public Sub ConfigMacroShortcuts()
 On Error GoTo CMS_Error
     Debug.Print "-----------------------------------------------------------"
     Debug.Print "Asignando los shortcuts a las macros."
+    
+    'Agregamos verificación de libros visibles.
+    'Los estatutos de MacroOptions fallan cuando no hay libros visibles.
+    If UC.NumVisibleBooks = 0 Then
+        Debug.Print "No hay libros visibles. Cancelando."
+        Exit Sub
+    End If
+    
     If UC.IsAutoStartPath(ThisWorkbook.path) Then
         ShortcutsPrd
     Else
@@ -721,8 +729,8 @@ On Error GoTo CMS_Error
     
     'Desactivamos los eventos para que no se ejecute el event handler del libro.
     Debug.Print "Listo. Grabando..."
-    Dim BkEnableEvents: BkEnableEvents = Application.EnableEvents
-    Application.EnableEvents = False
+    Dim BkEnableEvents
+    BkEnableEvents = UC.SetAppEnableEvents(False)
     ThisWorkbook.Save
     Application.EnableEvents = BkEnableEvents
     
@@ -745,7 +753,7 @@ Private Sub ShortcutsDev()
 End Sub
 \\\--- END OF MODULE ---
 
-[UtilsClass] 32 líneas de código.
+[UtilsClass] 51 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : UtilsClass
@@ -778,6 +786,25 @@ End Function
 '----------------------------------------------------------------------------------------------------
 Public Function IsAutoStartPath(path As String) As Boolean
     If UCase(path) = UCase(GetAutoStartPath()) Then IsAutoStartPath = True
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Asigna Application.EnableEvents y regresa el valor que tenía para propósitos de almacenamiento.
+'----------------------------------------------------------------------------------------------------
+Public Function SetAppEnableEvents(value As Boolean) As Boolean
+    SetAppEnableEvents = Application.EnableEvents
+    Application.EnableEvents = value
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el número de ventanas de libro visibles en Excel. (Algunas funciones truenan si no hay libros visibles)
+'----------------------------------------------------------------------------------------------------
+Public Function NumVisibleBooks() As Integer
+    NumVisibleBooks = 0
+    Dim wnd As Window
+    For Each wnd In Application.Windows
+        If wnd.Visible Then NumVisibleBooks = NumVisibleBooks + 1
+    Next
 End Function
 \\\--- END OF MODULE ---
 
