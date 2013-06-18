@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 757
+ * Líneas de código VB: 763
 
 Detalle
 =======
@@ -564,7 +564,7 @@ Sub ReplaceByRangeWorker(FindWhat As Range, ReplaceWith As Range, SearchWhere As
 End Sub
 \\\--- END OF MODULE ---
 
-[MyLibs] 38 líneas de código.
+[MyLibs] 44 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : MyLibs
@@ -604,6 +604,12 @@ Public Sub ExportToTxtConConfirmacion()
     ExportToTxt ActiveWorkbook, True
 End Sub
 
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa una nueva instancia de RunHelperClass.
+'----------------------------------------------------------------------------------------------------
+Public Function GetRunHelper() As RunHelperClass
+    Set GetRunHelper = New RunHelperClass
+End Function
 \\\--- END OF MODULE ---
 
 [BookLoaderClass] 75 líneas de código.
@@ -664,7 +670,7 @@ End Sub
 
 'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
 Private Sub Class_Terminate()
-    Debug.Print "BookLoaderClass.Terminate()"
+    'Debug.Print "BookLoaderClass.Terminate()"
     If Not LeaveBookOpenOnTerminate Then CloseBook
 End Sub
 
@@ -827,7 +833,7 @@ Private Utils As New UtilsClass
 Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
 
 Public Function GetUtils() As UtilsClass
-    Set GetUtilsClass = Utils 'Recicla la misma instancia...
+    Set GetUtils = Utils 'Recicla la misma instancia...
 End Function
 
 'Asigna el módo de cálculo, y guarda el actual, para poder recuperarlo posteriormente.
@@ -844,7 +850,7 @@ Private Sub RestoreCalculation()
 End Sub
 
 Private Sub Class_Terminate()
-    Debug.Print "RunHelperClass.Terminate()"
+    'Debug.Print "RunHelperClass.Terminate()"
     If BackupCalculationMode <> 0 Then RestoreCalculation
 End Sub
 
