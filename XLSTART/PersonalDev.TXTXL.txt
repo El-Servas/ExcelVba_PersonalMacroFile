@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 721
+ * Líneas de código VB: 729
 
 Detalle
 =======
@@ -685,7 +685,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[Config] 48 líneas de código.
+[Config] 56 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo Personal de Macros (APM)
@@ -706,6 +706,9 @@ Public Const LIB_MAIN_FUNCTION_NAME As String = "Main"
 
 Private UC As New UtilsClass
 
+'----------------------------------------------------------------------------------------------------
+'Purpose: Asigna atajos a las macros según la ubicación del libro, y lo graba.
+'----------------------------------------------------------------------------------------------------
 Public Sub ConfigMacroShortcuts()
 On Error GoTo CMS_Error
     Debug.Print "-----------------------------------------------------------"
@@ -715,10 +718,15 @@ On Error GoTo CMS_Error
     Else
         ShortcutsDev
     End If
+    
+    'Desactivamos los eventos para que no se ejecute el event handler del libro.
     Debug.Print "Listo. Grabando..."
+    Dim BkEnableEvents: BkEnableEvents = Application.EnableEvents
+    Application.EnableEvents = False
     ThisWorkbook.Save
+    Application.EnableEvents = BkEnableEvents
+    
     Debug.Print "Listo."
-    Debug.Print
     Debug.Print "Terminada la inicialización de los shortcuts de las macros."
     Debug.Print "-----------------------------------------------------------"
 Exit Sub
