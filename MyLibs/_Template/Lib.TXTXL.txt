@@ -1,0 +1,70 @@
+Representación Textual del archivo de Excel: "Lib.xls"
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 3
+
+ * Líneas de código VB: 23
+
+Detalle
+=======
+
+Hojas:
+ [Sheet1]
+
+Contenido:
+[Sheet1]
+
+Nombres:
+
+Nombre del proyecto VB: [Lib_cJobject]
+
+Módulos VBA:
+ [ThisWorkbook] Tipo: 100
+ [Sheet1] Tipo: 100
+ [Lib] Tipo: 1
+
+Codigo:
+[ThisWorkbook] 5 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+Application.Run "Personal.xlsb!ExportToTxt", ThisWorkbook
+End Sub
+\\\--- END OF MODULE ---
+
+[Sheet1] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+\\\--- END OF MODULE ---
+
+[Lib] 16 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Librería:
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+Private Const VERSION As String = "v0.1"
+'---------------------------------------------------------------------------------------
+Private Const LIB_NAME As String = "Lib_"
+Private Const LIB_FRIENDLY_NAME As String = ""
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Punto de entrada principal a la librería.
+'----------------------------------------------------------------------------------------------------
+Public Sub Main()
+
+End Sub
+\\\--- END OF MODULE ---
+
+
+** Fin del proceso de exportación. **
+Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
