@@ -1,0 +1,95 @@
+Representación Textual del archivo de Excel: "Samples.xls"
+Fecha y hora de generación: 19/06/2013 01:06:53 p.m.
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 3
+
+ * Líneas de código VB: 44
+
+Detalle
+=======
+
+Hojas:
+ [Sheet1]
+
+Contenido:
+[Sheet1]
+[A1] \Para correr los ejemplos, el archivo PersonalDev debe estar abierto en Excel.\
+[A3] \Para probar la rutina ExportToTxt, teclee Ctrl-R\
+[A4] \Para ver un ejemplo de (De)Serialización, ver el proyecto VB.\
+
+Nombres:
+
+Nombre del proyecto VB: [VBAProject]
+
+Módulos VBA:
+ [ThisWorkbook] Tipo: 100
+ [Sheet1] Tipo: 100
+ [Module1] Tipo: 1
+
+Codigo:
+[ThisWorkbook] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+\\\--- END OF MODULE ---
+
+[Sheet1] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+\\\--- END OF MODULE ---
+
+[Module1] 40 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Ejemplo de Serialización/Deserialización usando la librería cJobject
+'----------------------------------------------------------------------------------------------------
+Sub test()
+Debug.Print "> Inicio Module1.test()"
+On Error GoTo Outer_Error
+
+    Dim RH: Set RH = Application.Run("PersonalDev.xlsb!GetRunHelper")
+    
+    RH.ErrNum = 0: Dim BL: Set BL = RH.OpenLibBook("cJobject.xls")
+    If RH.ErrNum <> 0 Then Error.Raise RH.ErrNum, , RH.ErrDesc
+    
+    BL.ErrNum = 0: Dim Lib: Set Lib = BL.GetLib()
+    If BL.ErrNum <> 0 Then Error.Raise BL.ErrNum, , BL.ErrDesc
+    
+    Dim cj
+    Set cj = Lib.New_cJobject()
+
+    cj.init Nothing, "Validation"
+    cj.Add "Tipo", 0
+
+    Dim data As String: data = cj.Serialize
+    Debug.Print data
+    'MsgBox data
+
+    Dim Deserred
+    Set Deserred = Lib.New_cJobject()
+    Deserred.deSerialize (data)
+'
+    Debug.Print Deserred.Serialize
+        
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!Module1.test] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Module1.test()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    'ErrNum = Err.Number: ErrDesc = Err.Description
+End Sub
+\\\--- END OF MODULE ---
+
+
+** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
+Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
