@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 4
 
- * Líneas de código VB: 525
+ * Líneas de código VB: 558
 
 Detalle
 =======
@@ -22,13 +22,13 @@ Contenido:
 
 Nombres:
 
-Nombre del proyecto VB: [VBAProject]
+Nombre del proyecto VB: [Lib_cJobject]
 
 Módulos VBA:
  [ThisWorkbook] Tipo: 100
  [Sheet1] Tipo: 100
  [cJobject] Tipo: 2
- [Module1] Tipo: 1
+ [Lib] Tipo: 1
 
 Codigo:
 [ThisWorkbook] 5 líneas de código.
@@ -551,11 +551,44 @@ Private Function anyQ() As String
 End Function
 \\\--- END OF MODULE ---
 
-[Module1] 17 líneas de código.
+[Lib] 50 líneas de código.
 ///--- BEGINNING OF MODULE ---
-Option Explicit
+'---------------------------------------------------------------------------------------
+' Librería: Serializa y deserializa datos a pseudo-JSON
+'---------------------------------------------------------------------------------------
 
-Sub test()
+Option Explicit
+Public Const VERSION As String = "v0.1"
+'---------------------------------------------------------------------------------------
+Public Const LIB_NAME As String = "Lib_cJobject"
+Public Const LIB_FRIENDLY_NAME As String = "Serializa y deserializa datos a pseudo-JSON"
+
+Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Punto de entrada principal para la librería.
+'----------------------------------------------------------------------------------------------------
+Public Sub Main()
+
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto real de librería
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib()
+Debug.Print "> Inicio Lib.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = New cJobject
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!Lib.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Lib.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+Sub EjemploDeUso()
     Dim cj As cJobject
     Set cj = New cJobject
     
