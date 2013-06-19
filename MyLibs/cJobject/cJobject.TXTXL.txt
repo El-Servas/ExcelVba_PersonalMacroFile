@@ -610,8 +610,8 @@ End Sub
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
-Public Function NewcJobject()
-    Set NewcJobject = New cJobject
+Public Function New_cJobject()
+    Set New_cJobject = New cJobject
 End Function
 \\\--- END OF MODULE ---
 
