@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 763
+ * Líneas de código VB: 778
 
 Detalle
 =======
@@ -612,7 +612,7 @@ Public Function GetRunHelper() As RunHelperClass
 End Function
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 75 líneas de código.
+[BookLoaderClass] 90 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -689,6 +689,21 @@ Public Function GetFunctionName(Optional rutina As String = LIB_MAIN_FUNCTION_NA
     GetFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
 End Function
 
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto principal de la librería.
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib() As Object
+Debug.Print "> Inicio BookLoaderClass.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = Application.Run(GetFunctionName("GetLib"))
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!BookLoaderClass.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin BookLoaderClass.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
 \\\--- END OF MODULE ---
 
 [Config] 65 líneas de código.
