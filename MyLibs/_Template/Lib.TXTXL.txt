@@ -7,9 +7,9 @@ Resumen
 
  * Nombres Definidos: 0
 
- * Módulos de Visual Basic: 3
+ * Módulos de Visual Basic: 4
 
- * Líneas de código VB: 23
+ * Líneas de código VB: 43
 
 Detalle
 =======
@@ -22,12 +22,13 @@ Contenido:
 
 Nombres:
 
-Nombre del proyecto VB: [Lib_cJobject]
+Nombre del proyecto VB: [LIB_NAME]
 
 Módulos VBA:
  [ThisWorkbook] Tipo: 100
  [Sheet1] Tipo: 100
  [Lib] Tipo: 1
+ [LibClass] Tipo: 2
 
 Codigo:
 [ThisWorkbook] 5 líneas de código.
@@ -45,17 +46,19 @@ Option Explicit
 
 \\\--- END OF MODULE ---
 
-[Lib] 16 líneas de código.
+[Lib] 34 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Librería:
 '---------------------------------------------------------------------------------------
 
 Option Explicit
-Private Const VERSION As String = "v0.1"
+Public Const VERSION As String = "v0.1"
 '---------------------------------------------------------------------------------------
-Private Const LIB_NAME As String = "Lib_"
-Private Const LIB_FRIENDLY_NAME As String = ""
+Public Const LIB_NAME As String = "Lib_"
+Public Const LIB_FRIENDLY_NAME As String = ""
+
+Public ErrNum, ErrDesc
 
 '----------------------------------------------------------------------------------------------------
 'Purpose: Punto de entrada principal a la librería.
@@ -63,6 +66,28 @@ Private Const LIB_FRIENDLY_NAME As String = ""
 Public Sub Main()
 
 End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto real de librería
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib()
+Debug.Print "> Inicio Lib.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = New LibClass
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!Lib.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Lib.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+\\\--- END OF MODULE ---
+
+[LibClass] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
 \\\--- END OF MODULE ---
 
 
