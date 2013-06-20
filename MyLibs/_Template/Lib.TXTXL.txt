@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 4
 
- * Líneas de código VB: 43
+ * Líneas de código VB: 59
 
 Detalle
 =======
@@ -84,9 +84,25 @@ Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
 End Function
 \\\--- END OF MODULE ---
 
-[LibClass] 2 líneas de código.
+[LibClass] 18 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
+
+Public ErrNum, ErrDesc
+
+Public Function Init() As Object
+Debug.Print "> Inicio LibClass.Init()"
+On Error GoTo Outer_Error
+
+    Set Init = Me
+    'Set Init = new Clase
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!LibClass.Init] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin LibClass.Init()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
 
 \\\--- END OF MODULE ---
 

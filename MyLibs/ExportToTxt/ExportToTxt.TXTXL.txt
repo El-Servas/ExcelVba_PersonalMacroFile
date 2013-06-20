@@ -7,9 +7,9 @@ Resumen
 
  * Nombres Definidos: 0
 
- * Módulos de Visual Basic: 4
+ * Módulos de Visual Basic: 6
 
- * Líneas de código VB: 525
+ * Líneas de código VB: 644
 
 Detalle
 =======
@@ -19,6 +19,40 @@ Hojas:
 
 Contenido:
 [Sheet1]
+[A2] \xlValidateInputOnly\
+[A3] \xlValidateWholeNumber\
+[A4] \xlValidateDecimal\
+[A5] \xlValidateList\
+[A6] \xlValidateDate\
+[A7] \xlValidateTime\
+[A8] \xlValidateTextLength\
+[A9] \xlValidateCustom\
+[B2] \0\
+[B3] \1\
+[B4] \2\
+[B5] \3\
+[B6] \4\
+[B7] \5\
+[B8] \6\
+[B9] \7\
+[C2] \valor\
+[C3] \0\
+ * Celda CON DV: xlValidateWholeNumber
+
+[C4] \1\
+ * Celda CON DV: xlValidateDecimal
+
+[C5] \xlValidateInputOnly\
+ * Celda CON DV: xlValidateList
+
+[C6] \No Validation\
+[C7] \No Validation\
+[C8] \A\
+ * Celda CON DV: xlValidateTextLength
+
+[C9] \d\
+ * Celda CON DV: xlValidateCustom
+
 
 Nombres:
 
@@ -29,20 +63,16 @@ Módulos VBA:
  [Sheet1] Tipo: 100
  [Lib] Tipo: 1
  [Plantillas] Tipo: 1
+ [ExportClass] Tipo: 2
+ [LibClass] Tipo: 2
 
 Codigo:
-[ThisWorkbook] 12 líneas de código.
+[ThisWorkbook] 6 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
 Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
-
-    'En caso de que se grabe éste libro, que es el que tiene el código, vamos a llamar directamente a la rutina:
-    Lib.Main Me
-
-    'Para los demás libros, se debe de mandar llamar la rutina que dispare el proceso:
-    'On Error Resume Next: Application.Run "Personal.xlsb!ExportToTxt.ExportToTxt", Me
-
+Lib.Main ThisWorkbook
 End Sub
 
 \\\--- END OF MODULE ---
@@ -51,19 +81,76 @@ End Sub
 ///--- BEGINNING OF MODULE ---
 \\\--- END OF MODULE ---
 
-[Lib] 496 líneas de código.
+[Lib] 36 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Librería: Exporta una representación textual de un libro de Excel
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+Public Const VERSION As String = "POST v2.10 - 2013-06-17"
+'---------------------------------------------------------------------------------------
+Public Const LIB_NAME As String = "Lib_ExportToTxt"
+Public Const LIB_FRIENDLY_NAME As String = "Exportación a Texto"
+
+Public ErrNum, ErrDesc
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Punto de entrada principal a la librería.
+'----------------------------------------------------------------------------------------------------
+Public Sub Main(bookToExport As Workbook, Optional visual As Boolean = False)
+    Dim Exporter As New ExportClass
+    Exporter.Main bookToExport, visual
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto real de librería
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib()
+Debug.Print "> Inicio Lib.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = New LibClass
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.name & "!Lib.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Lib.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+\\\--- END OF MODULE ---
+
+[Plantillas] 17 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Public ErrNum, ErrDesc 'Para que compile el proyecto.
+
+Sub PlantillaParaDelegado()
+On Error GoTo DelegateError
+    'Código aquí.
+    'Si el delegado regresa valor, es buena idea asignarlo de inmediato, si se tiene un valor default.
+DelegateError:
+    ErrNum = Err.Number: ErrDesc = Err.Description 'ErrNum y ErrDesc deben de estar definidas a nivel módulo.
+End Sub
+
+Sub PlantillaParaLlamarADelegado()
+    'ErrNum y ErrDesc deben de estar definidas y accesibles en el módulo donde esté el delegado (Si fuera otro)
+    ErrNum = 0: Application.Run "NombreDelDelegado" ',Más, parámetros, etc
+    If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
+End Sub
+\\\--- END OF MODULE ---
+
+[ExportClass] 567 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 '---------------------------------------------------------------------------------------
-' Module    : ExportToTxt
+' Module    : ExportClass
 ' Author    : +
-' Date      : 05/06/2013
-' Purpose   : Exporta una representación textual de un libro de Excel
+' Date      : 18/06/2013
+' Purpose   : Encapsula la funcionalidad de la exportación.
 '---------------------------------------------------------------------------------------
-Private Const VERSION As String = "v2.10 - 2013-06-17"
-'---------------------------------------------------------------------------------------
-Private Const LIB_NAME As String = "Lib_ExportToTxt"
-Private Const LIB_FRIENDLY_NAME As String = "Exportación a Texto"
 
 Private Const TOKEN_PRE_EXTENSION = ".TXTXL"
 Private Const TOKEN_EXTENSION = ".txt"
@@ -88,6 +175,7 @@ Private Const ERROR_2 As String = TOKEN_BOOK_IN_AUTOSTART
 Private Const AUTO_START_PATH_PREFIX As String = "AppData"
 Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
 
+Private RH 'La clase RunHelper.
 Private FSO As New Scripting.FileSystemObject
 Private Stream As TextStream 'El stream donde vamos a escribir el archivo
 Private flVisual As Boolean 'Bandera que define si la ejecución es con confirmación visual.
@@ -101,6 +189,11 @@ Private ExpandedAutoStartPath As String
 Private flBookInAutoStartPath As Boolean
 
 Private ErrNum, ErrDesc 'Auxiliares para mantener los detalles del error si ocurre durante la ejecución de un delegado.
+
+Private Sub Class_Initialize()
+    Set RH = Application.Run("Personal.xlsb!GetRunHelper")
+    Set FSO = RH.GetUtils().GetFSO()
+End Sub
 
 Sub Main(bookToExport As Workbook, Optional visual As Boolean = False)
 On Error GoTo Catch
@@ -349,7 +442,7 @@ Sub IteraModulos(DelegateName As String)
     On Error GoTo ErrorAccesandoVBProject
     For Each vbcomponent In BTE.VBProject.VBComponents
         ix = ix + 1
-        ErrNum = 0: Application.Run DelegateName, vbcomponent, ix
+        ErrNum = 0: CallByName Me, DelegateName, VbMethod, vbcomponent, ix
         If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
     Next
 ErrorAccesandoVBProject: 'Si truena no hacemos nada.
@@ -374,7 +467,7 @@ Sub IteraNombres(DelegateName As String)
     ix = 0
     For Each name In BTE.Names
         ix = ix + 1
-        ErrNum = 0: Application.Run DelegateName, name, ix
+        ErrNum = 0: CallByName Me, DelegateName, VbMethod, name, ix
         If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
     Next
 End Sub
@@ -436,7 +529,7 @@ Sub IteraHojas(DelegateName As String)
     ix = 0
     For Each sheet In BTE.Worksheets
         ix = ix + 1
-        ErrNum = 0: Application.Run DelegateName, sheet, ix
+        ErrNum = 0: CallByName Me, DelegateName, VbMethod, sheet, ix
         If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
     Next
 End Sub
@@ -471,6 +564,13 @@ On Error GoTo DelegateError
         NombreDefinido = GetNameOfCell(cell): If NombreDefinido <> "" Then NombreDefinido = "(" & NombreDefinido & ") "
         Contenido = "\" & Contenido & "\"
         Log Direccion & NombreDefinido & Contenido
+        
+        'Reportamos si la celda tiene DV o no:
+        If CellHasValidation(cell) Then
+            Log GetDVInfo(cell)
+            Log
+        End If
+        
         ProcesaCelda = iterationIndex + 1
     End If
 DelegateError:
@@ -484,7 +584,7 @@ Sub IteraCeldas(sheet As Worksheet, DelegateName As String)
     ix = 0
     For Each column In sheet.UsedRange.Cells.Columns
         For Each cell In column.Cells
-            ErrNum = 0: ix = Application.Run(DelegateName, cell, ix)
+            ErrNum = 0: ix = CallByName(Me, DelegateName, VbMethod, cell, ix)
             If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
         Next
         DoEvents
@@ -549,29 +649,92 @@ Sub MensajeFinal()
     Log MensajeFinal
     Log GenVersionString()
 End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Verdadero si  la celda tiene Data Validation asociada.
+'----------------------------------------------------------------------------------------------------
+Private Function CellHasValidation(cell As Range) As Boolean
+On Error GoTo NoValidation
+    Dim dummy As XlDVType
+    dummy = cell.Validation.Type
+    CellHasValidation = True
+Exit Function
+NoValidation:
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Reune la información relevante de la data validation y lo regresa como un string para ser exportado.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVInfo(cell As Range) As String
+    Select Case GetDVType(cell)
+    Case 0
+        GetDVInfo = " * Celda sin DV"
+    Case Else
+        GetDVInfo = " * Celda CON DV: " & GetDVTypeName(GetDVType(cell))
+    End Select
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el XlDVType de una celda.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVType(cell As Range) As Long
+    If Not CellHasValidation(cell) Then
+        GetDVType = 0
+    Else
+        GetDVType = cell.Validation.Type
+    End If
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el nombre del tipo de la enumeración XlDVType
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVTypeName(value As XlDVType) As String
+    Dim Res As String
+    Select Case value
+        Case xlValidateInputOnly
+            Res = "xlValidateInputOnly"
+        Case xlValidateWholeNumber
+            Res = "xlValidateWholeNumber"
+        Case xlValidateDecimal
+            Res = "xlValidateDecimal"
+        Case xlValidateList
+            Res = "xlValidateList"
+        Case xlValidateDate
+            Res = "xlValidateDate"
+        Case xlValidateTime
+            Res = "xlValidateTime"
+        Case xlValidateTextLength
+            Res = "xlValidateTextLength"
+        Case xlValidateCustom
+            Res = "xlValidateCustom"
+    End Select
+    GetDVTypeName = Res
+End Function
+
 \\\--- END OF MODULE ---
 
-[Plantillas] 17 líneas de código.
+[LibClass] 18 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
-Public ErrNum, ErrDesc 'Para que compile el proyecto.
+Public ErrNum, ErrDesc
 
-Sub PlantillaParaDelegado()
-On Error GoTo DelegateError
-    'Código aquí.
-    'Si el delegado regresa valor, es buena idea asignarlo de inmediato, si se tiene un valor default.
-DelegateError:
-    ErrNum = Err.Number: ErrDesc = Err.Description 'ErrNum y ErrDesc deben de estar definidas a nivel módulo.
-End Sub
+Public Function Init() As Object
+Debug.Print "> Inicio LibClass.Init()"
+On Error GoTo Outer_Error
 
-Sub PlantillaParaLlamarADelegado()
-    'ErrNum y ErrDesc deben de estar definidas y accesibles en el módulo donde esté el delegado (Si fuera otro)
-    ErrNum = 0: Application.Run "NombreDelDelegado" ',Más, parámetros, etc
-    If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
-End Sub
+    'Set Init = Me
+    Set Init = New ExportClass
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.name & "!LibClass.Init] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin LibClass.Init()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
 \\\--- END OF MODULE ---
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17
