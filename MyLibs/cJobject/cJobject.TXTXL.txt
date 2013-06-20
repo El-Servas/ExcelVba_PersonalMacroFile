@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 5
 
- * Líneas de código VB: 563
+ * Líneas de código VB: 579
 
 Detalle
 =======
@@ -140,7 +140,7 @@ Public Property Get asBoolean() As Boolean
     asBoolean = (LCase(asString) = "true")
 End Property
 
-Public Sub init(p As cJobject, Optional k As String = "_null", Optional v As Variant = Empty)
+Public Sub Init(p As cJobject, Optional k As String = "_null", Optional v As Variant = Empty)
     Set pParent = p
     pValid = True
     If Not pParent Is Nothing Then
@@ -190,7 +190,7 @@ Public Function Insert(s As String, Optional v As Variant = Empty) As cJobject
         End If
         
         Set joNew = New cJobject
-        joNew.init Me, sk, v
+        joNew.Init Me, sk, v
     Else
         If Not IsEmpty(v) Then joNew.value = v
     End If
@@ -403,7 +403,7 @@ Private Function dsProcess(job As cJobject, Optional whatNext As String = "{") A
                 s = getQuotedItem(pointedAt)
                 ' if i'm being called by a new object (top of the tree). need to initialize
                 If jo.Children Is Nothing Then
-                    jo.init Nothing, s
+                    jo.Init Nothing, s
                 Else
                     Set jo = jo.Add(s)
                 End If
@@ -593,7 +593,7 @@ Sub EjemploDeUso()
     Dim cj As cJobject
     Set cj = New cJobject
     
-    cj.init Nothing, "Validation"
+    cj.Init Nothing, "Validation"
     cj.Add "Tipo", 0
     
     Dim data As String: data = cj.Serialize
@@ -606,15 +606,31 @@ Sub EjemploDeUso()
 End Sub
 \\\--- END OF MODULE ---
 
-[LibClass] 5 líneas de código.
+[LibClass] 21 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
-Public Function New_cJobject()
-    Set New_cJobject = New cJobject
+Public ErrNum, ErrDesc
+
+Public Function Init() As Object
+Debug.Print "> Inicio LibClass.Init()"
+On Error GoTo Outer_Error
+
+    Set Init = Me
+    'Set Init = new Clase
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!LibClass.Init] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin LibClass.Init()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+Public Function New_cJobject() As Object
+Set New_cJobject = New cJobject
 End Function
 \\\--- END OF MODULE ---
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17
