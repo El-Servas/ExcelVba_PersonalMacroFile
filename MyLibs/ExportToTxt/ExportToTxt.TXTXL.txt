@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 6
 
- * Líneas de código VB: 644
+ * Líneas de código VB: 773
 
 Detalle
 =======
@@ -19,40 +19,6 @@ Hojas:
 
 Contenido:
 [Sheet1]
-[A2] \xlValidateInputOnly\
-[A3] \xlValidateWholeNumber\
-[A4] \xlValidateDecimal\
-[A5] \xlValidateList\
-[A6] \xlValidateDate\
-[A7] \xlValidateTime\
-[A8] \xlValidateTextLength\
-[A9] \xlValidateCustom\
-[B2] \0\
-[B3] \1\
-[B4] \2\
-[B5] \3\
-[B6] \4\
-[B7] \5\
-[B8] \6\
-[B9] \7\
-[C2] \valor\
-[C3] \0\
- * Celda CON DV: xlValidateWholeNumber
-
-[C4] \1\
- * Celda CON DV: xlValidateDecimal
-
-[C5] \xlValidateInputOnly\
- * Celda CON DV: xlValidateList
-
-[C6] \No Validation\
-[C7] \No Validation\
-[C8] \A\
- * Celda CON DV: xlValidateTextLength
-
-[C9] \d\
- * Celda CON DV: xlValidateCustom
-
 
 Nombres:
 
@@ -88,7 +54,7 @@ End Sub
 '---------------------------------------------------------------------------------------
 
 Option Explicit
-Public Const VERSION As String = "POST v2.10 - 2013-06-17"
+Public Const VERSION As String = "v2.11 - 2013-06-20"
 '---------------------------------------------------------------------------------------
 Public Const LIB_NAME As String = "Lib_ExportToTxt"
 Public Const LIB_FRIENDLY_NAME As String = "Exportación a Texto"
@@ -142,7 +108,7 @@ Sub PlantillaParaLlamarADelegado()
 End Sub
 \\\--- END OF MODULE ---
 
-[ExportClass] 567 líneas de código.
+[ExportClass] 696 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 '---------------------------------------------------------------------------------------
@@ -651,7 +617,7 @@ Sub MensajeFinal()
 End Sub
 
 '----------------------------------------------------------------------------------------------------
-'Purpose: Verdadero si  la celda tiene Data Validation asociada.
+'Purpose: Verdadero si la celda tiene Data Validation asociada.
 '----------------------------------------------------------------------------------------------------
 Private Function CellHasValidation(cell As Range) As Boolean
 On Error GoTo NoValidation
@@ -660,18 +626,6 @@ On Error GoTo NoValidation
     CellHasValidation = True
 Exit Function
 NoValidation:
-End Function
-
-'----------------------------------------------------------------------------------------------------
-'Purpose: Reune la información relevante de la data validation y lo regresa como un string para ser exportado.
-'----------------------------------------------------------------------------------------------------
-Private Function GetDVInfo(cell As Range) As String
-    Select Case GetDVType(cell)
-    Case 0
-        GetDVInfo = " * Celda sin DV"
-    Case Else
-        GetDVInfo = " * Celda CON DV: " & GetDVTypeName(GetDVType(cell))
-    End Select
 End Function
 
 '----------------------------------------------------------------------------------------------------
@@ -691,26 +645,167 @@ End Function
 Private Function GetDVTypeName(value As XlDVType) As String
     Dim Res As String
     Select Case value
-        Case xlValidateInputOnly
-            Res = "xlValidateInputOnly"
-        Case xlValidateWholeNumber
-            Res = "xlValidateWholeNumber"
-        Case xlValidateDecimal
-            Res = "xlValidateDecimal"
-        Case xlValidateList
-            Res = "xlValidateList"
-        Case xlValidateDate
-            Res = "xlValidateDate"
-        Case xlValidateTime
-            Res = "xlValidateTime"
-        Case xlValidateTextLength
-            Res = "xlValidateTextLength"
-        Case xlValidateCustom
-            Res = "xlValidateCustom"
+    Case xlValidateInputOnly
+        Res = "InputOnly"
+    Case xlValidateWholeNumber
+        Res = "Número Entero"
+    Case xlValidateDecimal
+        Res = "Decimal"
+    Case xlValidateList
+        Res = "Lista"
+    Case xlValidateDate
+        Res = "Fecha"
+    Case xlValidateTime
+        Res = "Hora"
+    Case xlValidateTextLength
+        Res = "Longitud del texto"
+    Case xlValidateCustom
+        Res = "Personalizada"
     End Select
     GetDVTypeName = Res
 End Function
 
+'----------------------------------------------------------------------------------------------------
+'Purpose: Reune la información relevante de la data validation y lo regresa como un string para ser exportado.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVInfo(cell As Range) As String
+    Dim Res As String
+    Dim Prefijo As String: Prefijo = " DataValidation: "
+    Dim DVType As Long: DVType = GetDVType(cell)
+    
+    If DVType <> xlValidateInputOnly Then
+        Prefijo = Prefijo & GetDVTypeName(DVType)
+        
+        Select Case DVType
+        Case XlDVType.xlValidateList '3
+            Prefijo = Prefijo & ". [" & GetDVListInfo(cell.Validation) & "]"
+            
+        Case XlDVType.xlValidateCustom '7
+            Prefijo = Prefijo & ". [" & GetDVCustomTypeInfo(cell.Validation) & "]"
+            
+        Case Else
+            Prefijo = Prefijo & ". [" & GetDVSharedTypesInfo(cell.Validation) & "]"
+            
+        End Select
+        
+        Res = Prefijo
+        Res = Res & vbCrLf
+        
+        Res = Res & " " & GetDVGeneralInfo(cell.Validation)
+    End If
+    
+    GetDVInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un string con la información compartida entre algunos tipos de validación
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVSharedTypesInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Operador:""" & GetDVOperatorName(valob.operator) & """ "
+    Res = Res & "Formula1:" & valob.Formula1 & " "
+    If valob.Formula2 <> "" Then Res = Res & "Formula2:" & valob.Formula2 & " "
+    GetDVSharedTypesInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un string con la información de validación específica del tipo Lista.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVListInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Fuente:" & valob.Formula1 & " "
+    Res = Res & "ListaEnCelda:" & valob.InCellDropdown & " "
+    GetDVListInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un string con la información de validación específica del tipo Custom.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVCustomTypeInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Formula:" & valob.Formula1 & " "
+    GetDVCustomTypeInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Arma el string con las propiedades generales de todos los tipos de validación.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVGeneralInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Mensaje=[" & GetDVInputInfo(valob) & "] "
+    Res = Res & vbCrLf & " "
+    
+    Res = Res & "Advertencia=[" & GetDVAlertInfo(valob) & "] "
+    Res = Res & vbCrLf & " "
+    
+    Res = Res & "OmitirBlancos:" & valob.IgnoreBlank & " "
+    Res = Res & "DatoActualEsVálido:" & valob.value & " "
+    GetDVGeneralInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Construye y regresa un string con la información del mensaje del objeto de validación.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVInputInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Mostrar:" & valob.ShowInput & " "
+    Res = Res & "Titulo:""" & valob.InputTitle & """ "
+    Res = Res & "Mensaje:""" & Replace(valob.InputMessage, vbLf, "/") & """ "
+    GetDVInputInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Construye y regresa un string con la información de la alerta del objeto de validación.
+'----------------------------------------------------------------------------------------------------
+Private Function GetDVAlertInfo(valob As Validation) As String
+    Dim Res As String
+    Res = Res & "Mostrar:" & valob.ShowError & " "
+    Res = Res & "Titulo:""" & valob.ErrorTitle & """ "
+    Res = Res & "Mensaje:""" & Replace(valob.ErrorMessage, vbLf, "/") & """ "
+    Res = Res & "Estilo:" & GetAlertStyleName(valob.alertStyle) & " "
+    GetDVAlertInfo = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el nombre del tipo de la enum XlDVAlertStyle
+'----------------------------------------------------------------------------------------------------
+Private Function GetAlertStyleName(style As XlDVAlertStyle) As String
+    Dim Res As String
+    Select Case style
+    Case xlValidAlertStop
+        Res = "Límite"
+    Case xlValidAlertWarning
+        Res = "Advertencia"
+    Case xlValidAlertInformation
+        Res = "Información."
+    End Select
+    GetAlertStyleName = Res
+End Function
+
+Private Function GetDVOperatorName(operator As Long) As String
+    Dim Res As String
+    Select Case operator
+    Case 1
+        Res = "Entre"
+    Case 2
+        Res = "No está entre"
+    Case 3
+        Res = "Igual a"
+    Case 4
+        Res = "No igual a"
+    Case 5
+        Res = "Mayor que"
+    Case 6
+        Res = "Menor que"
+    Case 7
+        Res = "Mayor o igual que"
+    Case 8
+        Res = "Menor o igual que"
+    Case Else
+        Res = "Desconocido"
+    End Select
+    GetDVOperatorName = Res
+End Function
 \\\--- END OF MODULE ---
 
 [LibClass] 18 líneas de código.
@@ -737,4 +832,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] v2.11 - 2013-06-20
