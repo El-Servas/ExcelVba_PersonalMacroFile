@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 782
+ * Líneas de código VB: 805
 
 Detalle
 =======
@@ -834,7 +834,7 @@ Public Function NumVisibleBooks() As Integer
 End Function
 \\\--- END OF MODULE ---
 
-[RunHelperClass] 46 líneas de código.
+[RunHelperClass] 69 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : RunHelperClass
@@ -880,6 +880,29 @@ On Error GoTo DelegateError
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
     Set OpenLibBook = BL
 DelegateError:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Abre un libro de librería, obtiene la clase, la inicializa y la regresa.
+'----------------------------------------------------------------------------------------------------
+Public Function GetLibClass(bookFileName As String) As Object
+Debug.Print "> Inicio RunHelperClass.GetLibClass()"
+On Error GoTo Outer_Error
+
+    ErrNum = 0: Dim BL: Set BL = OpenLibBook(bookFileName)
+    If ErrNum <> 0 Then Error.Raise ErrNum, , ErrDesc
+    
+    BL.ErrNum = 0: Dim Lib: Set Lib = BL.GetLib()
+    If BL.ErrNum <> 0 Then Error.Raise BL.ErrNum, , BL.ErrDesc
+    
+    Set Lib = Lib.Init()
+    Set GetLibClass = Lib
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!RunHelperClass.GetLibClass] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin RunHelperClass.GetLibClass()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Function
 \\\--- END OF MODULE ---
