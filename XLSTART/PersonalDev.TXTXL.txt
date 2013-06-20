@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 778
+ * Líneas de código VB: 782
 
 Detalle
 =======
@@ -612,7 +612,7 @@ Public Function GetRunHelper() As RunHelperClass
 End Function
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 90 líneas de código.
+[BookLoaderClass] 94 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -664,8 +664,12 @@ Private Sub RestoreCurrentBook()
 End Sub
 
 Private Sub CloseBook()
-    If Not SummonedBook Is Nothing Then SummonedBook.Close False
+    If Not SummonedBook Is Nothing Then Debug.Print "Cerrando libro de librería [" & SummonedBook.Name & "]": SummonedBook.Close False
     Set SummonedBook = Nothing
+End Sub
+
+Private Sub Class_Initialize()
+    LeaveBookOpenOnTerminate = True
 End Sub
 
 'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
