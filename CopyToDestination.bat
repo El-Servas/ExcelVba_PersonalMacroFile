@@ -33,7 +33,7 @@ echo ---------------------------------------------------------------------------
 echo Copiando librerias...
 echo.
 
-XCOPY MyLibs\*.* %appdata%\Microsoft\Excel\MyLibs /I /S /Y /Q /EXCLUDE:xcopy.ignore
+XCOPY MyLibs\*.* "%appdata%\Microsoft\Excel\MyLibs" /I /S /Y /Q /EXCLUDE:xcopy.ignore
 
 echo Listo.
 echo.
