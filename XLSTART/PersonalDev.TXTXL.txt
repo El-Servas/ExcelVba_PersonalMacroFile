@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 805
+ * Líneas de código VB: 806
 
 Detalle
 =======
@@ -834,7 +834,7 @@ Public Function NumVisibleBooks() As Integer
 End Function
 \\\--- END OF MODULE ---
 
-[RunHelperClass] 69 líneas de código.
+[RunHelperClass] 70 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : RunHelperClass
@@ -878,6 +878,7 @@ On Error GoTo DelegateError
     Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
     BL.ErrNum = 0: BL.OpenLibBook (bookFileName)
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    
     Set OpenLibBook = BL
 DelegateError:
     ErrNum = Err.Number: ErrDesc = Err.Description
@@ -891,10 +892,10 @@ Debug.Print "> Inicio RunHelperClass.GetLibClass()"
 On Error GoTo Outer_Error
 
     ErrNum = 0: Dim BL: Set BL = OpenLibBook(bookFileName)
-    If ErrNum <> 0 Then Error.Raise ErrNum, , ErrDesc
+    If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
     
     BL.ErrNum = 0: Dim Lib: Set Lib = BL.GetLib()
-    If BL.ErrNum <> 0 Then Error.Raise BL.ErrNum, , BL.ErrDesc
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
     
     Set Lib = Lib.Init()
     Set GetLibClass = Lib
@@ -909,4 +910,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17
