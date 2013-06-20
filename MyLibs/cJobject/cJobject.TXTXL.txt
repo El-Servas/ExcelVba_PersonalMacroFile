@@ -1,0 +1,636 @@
+Representación Textual del archivo de Excel: "cJobject.xls"
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 5
+
+ * Líneas de código VB: 579
+
+Detalle
+=======
+
+Hojas:
+ [Sheet1]
+
+Contenido:
+[Sheet1]
+
+Nombres:
+
+Nombre del proyecto VB: [Lib_cJobject]
+
+Módulos VBA:
+ [ThisWorkbook] Tipo: 100
+ [Sheet1] Tipo: 100
+ [cJobject] Tipo: 2
+ [Lib] Tipo: 1
+ [LibClass] Tipo: 2
+
+Codigo:
+[ThisWorkbook] 5 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+Application.Run "Personal.xlsb!ExportToTxt", ThisWorkbook
+End Sub
+\\\--- END OF MODULE ---
+
+[Sheet1] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+\\\--- END OF MODULE ---
+
+[cJobject] 501 líneas de código.
+///--- BEGINNING OF MODULE ---
+' this is used for object serliazation. Its just basic JSON with only string data types catered for
+Option Explicit
+Private pParent As cJobject
+Private pValue As Variant
+Private pKey As String
+Private pChildren As Collection
+Private pValid As Boolean
+Private pIndex As Long
+Const cArrayKey = "_array"
+Private pisArrayRoot                ' this is the root of an array
+Private pPointer As Long            ' this one is used for deserializing string
+Private pJstring As String          ' so is this
+Public Property Get isValid() As Boolean
+    isValid = pValid
+End Property
+Public Property Get ChildIndex() As Long
+    ChildIndex = pIndex
+End Property
+Public Property Get isArrayRoot() As Boolean
+    isArrayRoot = pisArrayRoot
+End Property
+Public Property Get isArrayMember() As Boolean
+
+    If Not pParent Is Nothing Then
+        isArrayMember = pParent.isArrayRoot
+    Else
+        isArrayMember = False
+    End If
+End Property
+Public Property Let isArrayRoot(p As Boolean)
+    pisArrayRoot = p
+End Property
+
+Public Property Get Parent() As cJobject
+    Set Parent = pParent
+End Property
+Public Property Get Root() As cJobject
+    Dim jo As cJobject
+    ' the root is the object with no parent
+    Set jo = Me
+    While Not jo.Parent Is Nothing
+        Set jo = jo.Parent
+    Wend
+    Set Root = jo
+End Property
+Public Property Get Key() As String
+    Key = pKey
+End Property
+Public Property Get value() As Variant
+    value = pValue
+End Property
+Public Property Let value(p As Variant)
+    pValue = p
+End Property
+Public Property Let Key(p As String)
+    pKey = p
+End Property
+Public Property Get Children() As Collection
+    Set Children = pChildren
+End Property
+Public Property Get hasChildren() As Boolean
+    hasChildren = (pChildren.Count > 0)
+End Property
+Public Property Get asLong() As Long
+    If IsNumeric(asString) Then
+        asLong = CLng(pValue)
+    Else
+        asLong = 0
+    End If
+End Property
+Public Property Get asDate() As Date
+    If IsDate(asString) Then
+        asDate = CDate(pValue)
+    Else
+        asDate = 0
+    End If
+End Property
+Public Property Get asString() As String
+    asString = CStr(pValue)
+End Property
+Public Property Get asDouble() As Double
+   If IsNumeric(asString) Then
+        asDouble = CDbl(pValue)
+    Else
+        asDouble = 0
+    End If
+End Property
+Public Property Get asBoolean() As Boolean
+    asBoolean = (LCase(asString) = "true")
+End Property
+
+Public Sub Init(p As cJobject, Optional k As String = "_null", Optional v As Variant = Empty)
+    Set pParent = p
+    pValid = True
+    If Not pParent Is Nothing Then
+        If Not Child(k) Is Nothing Then
+            MsgBox ("Programming error " & k & " is a duplicate object")
+            pValid = False
+        Else
+            
+            pParent.Children.Add Me, k
+            pIndex = pParent.Children.Count
+        End If
+
+    End If
+    
+    Set pChildren = New Collection
+    pKey = k
+    pValue = v
+   
+
+End Sub
+
+Public Function Child(s As String) As cJobject
+    Dim aString As Variant, n As Long, jo As cJobject, jc  As cJobject
+    If Len(s) > 0 Then
+        aString = Split(s, ".")
+        Set jo = Me
+        ' we take something x.y.z and find the child
+        For n = LBound(aString) To UBound(aString)
+            Set jc = jo.ChildExists(CStr(aString(n)))
+            Set jo = jc
+            If jo Is Nothing Then Exit For
+        Next n
+    End If
+    Set Child = jo
+
+End Function
+Public Function Insert(s As String, Optional v As Variant = Empty) As cJobject
+    Dim joNew As cJobject, sk As String
+    Set joNew = ChildExists(s)
+
+    If joNew Is Nothing Then
+        ' if its an array, use the child index as the name
+        If pisArrayRoot Then
+            sk = CStr(1 + pChildren.Count)
+        Else
+            sk = s
+        End If
+        
+        Set joNew = New cJobject
+        joNew.Init Me, sk, v
+    Else
+        If Not IsEmpty(v) Then joNew.value = v
+    End If
+    Set Insert = joNew
+End Function
+Public Function Add(Optional k As String = "_null", Optional v As Variant = Empty) As cJobject
+    Dim aString As Variant, n As Long, jo As cJobject, jc  As cJobject
+    aString = Split(k, ".")
+    Set jo = Me
+    ' we take something x.y.z and add z with parent of y
+    For n = LBound(aString) To UBound(aString)
+        Set jc = jo.Insert(CStr(aString(n)), v)
+        Set jo = jc
+    Next n
+    Set Add = jo
+End Function
+Public Function AddArray() As cJobject
+    ' arrays are stored as the children of a special key which is a child of the key
+    ' who has the array
+    ' for example
+    ' abc.def._array.3  is the 3rd item in the array for def
+    ' abc.def._array.3._array.4 is another level of depth of array
+    ' and would be equivalent to
+    ' .child("abce.def._array").child("3").child("_array").Child("4")
+    Dim jo As cJobject
+    Set jo = Add(cArrayKey)
+    jo.isArrayRoot = True
+    Set AddArray = jo
+End Function
+' check if this ChildExists in current children
+Public Function ChildExists(s As String) As cJobject
+    On Error GoTo handle
+    Set ChildExists = pChildren(s)
+    Exit Function
+handle:
+    Set ChildExists = Nothing
+End Function
+Public Function fullKey() As String
+    ' reconstruct full key to parent
+    Dim s As String, jo As cJobject
+    Set jo = Me
+    While Not jo Is Nothing
+        s = jo.Key & "." & s
+        Set jo = jo.Parent
+    Wend
+    If Len(s) > 0 Then s = Left(s, Len(s) - 1)
+    fullKey = s
+    
+End Function
+
+Public Function hasKey() As Boolean
+    hasKey = (Not isArrayRoot And Not isArrayMember)
+End Function
+Public Function needsCurly() As Boolean
+    needsCurly = False
+    ' this is to decide whether {} are needed (because an array is present)
+    If hasKey Then
+        needsCurly = True
+        If Not pParent Is Nothing Then
+            needsCurly = (Not pParent.isArrayRoot And Not isArrayRoot)
+            If needsCurly And pChildren.Count = 1 Then
+                If pChildren(1).isArrayRoot Then
+                    needsCurly = False
+                End If
+            End If
+                         
+        End If
+    End If
+End Function
+Public Function needsSquare() As Boolean
+
+    needsSquare = isArrayRoot
+
+End Function
+Public Function Serialize() As String
+' make a JSON string of this structure
+  Serialize = "{" & recurseSerialize(Me) & vbCrLf & "}"
+End Function
+Public Function recurseSerialize(job As cJobject, Optional soFar As String = "") As String
+  Dim s As String, jo As cJobject, sIndent As String
+  
+  ' spacing for prettification
+  sIndent = job.Indent
+  
+  s = soFar
+  If Not job.needsSquare Then s = s & sIndent
+  If job.hasKey Then s = s & quote(job.Key) & ": "
+  
+  If Not job.hasChildren Then
+    s = s & quote(CStr(job.value))
+  Else
+    ' arrays need squares
+    If job.needsSquare Then s = s & "[" & vbCrLf
+    If job.needsCurly Then s = s & "{" & vbCrLf
+    
+    For Each jo In job.Children
+      s = recurseSerialize(jo, s) & "," & vbCrLf
+    Next jo
+    
+    ' get rid of trailing comma
+    s = Left(s, Len(s) - Len("," & vbCrLf))
+    If job.needsCurly Then s = s & vbCrLf & sIndent & "}"
+    If job.needsSquare Then s = s & vbCrLf & sIndent & " ]"
+
+  End If
+  recurseSerialize = s
+End Function
+Public Property Get Indent() As String
+    Indent = Space(Root.Depth - Depth + 2)
+End Property
+Public Property Get longestFullKey() As Long
+    longestFullKey = clongestFullKey(Root)
+End Property
+
+Public Property Get Depth(Optional l As Long = 0) As Long
+    Dim jo As cJobject
+    l = l + 1
+    For Each jo In pChildren
+        l = jo.Depth(l)
+    Next jo
+    Depth = l
+End Property
+Private Function clongestFullKey(job As cJobject, Optional soFar As Long = 0) As Long
+    Dim jo As cJobject
+    Dim l As Long
+    l = Len(job.fullKey)
+    If l < soFar Then l = soFar
+    For Each jo In job.Children
+        l = clongestFullKey(jo, l)
+    Next jo
+    clongestFullKey = l
+End Function
+Public Property Get formatData() As String
+    formatData = cformatdata(Root)
+End Property
+Private Function cformatdata(job As cJobject, Optional soFar As String = "") As String
+    Dim jo As cJobject, ji As cJobject
+    Dim s As String
+    s = soFar
+
+        s = s & itemFormat(job)
+        For Each ji In job.Children
+            s = cformatdata(ji, s)
+        Next ji
+
+
+    cformatdata = s
+End Function
+Private Function itemFormat(jo As cJobject) As String
+    itemFormat = jo.fullKey & Space(longestFullKey + 4 - Len(jo.fullKey)) _
+            & jo.value & vbCrLf
+End Function
+Public Sub jdebug()
+    Debug.Print formatData
+End Sub
+Private Function quote(s As String) As String
+    quote = q & s & q
+End Function
+Public Function deSerialize(s As String) As cJobject
+    ' this will take a simple JSON string and deserialize into a cJobject branch starting at ME
+    ' prepare string for processing
+    pPointer = 1
+    pJstring = Trim(s)
+
+    ' kickoff deserialization recursion
+    Set deSerialize = dsProcess(Me)
+    
+End Function
+
+Private Function dsProcess(job As cJobject, Optional whatNext As String = "{") As cJobject
+    Dim k As Long, jo As cJobject, s As String, what As String, jd As cJobject, v As Variant
+    
+    'are we done?
+    Set dsProcess = job
+    If pPointer > Len(pJstring) Then Exit Function
+
+    Set jo = job
+
+    ignoreNoise
+    
+    ' is it what was expected
+    what = pointedAt
+    If IsNumeric(what) And InStr(whatNext, nOk) <> 0 Then
+        what = nOk
+    End If
+    If InStr(whatNext, what) = 0 Then
+        badJSON whatNext
+        Exit Function
+    End If
+
+    ' process next token
+    Select Case what
+    ' start and recurse at a deeper level
+        Case "{"
+            pPointer = pPointer + 1
+            Set jo = dsProcess(jo, anyQ & "{[")
+    
+    ' its the beginning of an array
+        Case "["
+            pPointer = pPointer + 1
+            Set jo = dsProcess(jo.AddArray, anyQ & "{")
+
+        Case q, qs, nOk
+    ' add new key ?
+            ' is it a plain value with no key
+            If jo.isArrayRoot Then
+                jo.Add , getvItem(pointedAt)
+                Set jo = dsProcess(jo, ",]")
+            Else
+                s = getQuotedItem(pointedAt)
+                ' if i'm being called by a new object (top of the tree). need to initialize
+                If jo.Children Is Nothing Then
+                    jo.Init Nothing, s
+                Else
+                    Set jo = jo.Add(s)
+                End If
+                Set jo = dsProcess(jo, ":{")
+            End If
+    
+        Case ":"
+    ' its a value.
+            pPointer = pPointer + 1
+            jo.value = getvItem
+            Set jo = dsProcess(jo, anyQ & nOk & "[{},]")
+            
+        Case ","
+    ' another value - same key
+            pPointer = pPointer + 1
+            If Not jo.isArrayRoot Then Set jo = jo.Parent
+            Set jo = dsProcess(jo, anyQ & nOk)
+
+        Case "}"
+    ' backup a level
+            pPointer = pPointer + 1
+            Set jo = dsProcess(jo.Parent, anyQ & ",}")
+               
+        Case "]"
+    ' backdown a level
+            pPointer = pPointer + 1
+            Set jo = dsProcess(jo.Parent, anyQ & ",}")
+        
+        Case Else
+    ' unexpected thing happened
+            badJSON whatNext
+    
+    End Select
+    
+    ' should only get here if string exhausted or there was an error
+    '''Debug.Assert pPointer > Len(pJstring)
+End Function
+Private Function nOk() As String
+    ' some character to say that a numeric is ok
+    nOk = Chr(254)
+End Function
+Private Function getvItem(Optional whichQ As String = "") As Variant
+    Dim s As String
+    ' is it a string?
+    ignoreNoise
+    If isQuote(pointedAt) Then
+        getvItem = getQuotedItem(whichQ)
+    Else
+    ' maybe its a number
+        s = getNumericItem
+        If Len(s) > 0 Then getvItem = toNumber(s)
+
+    End If
+End Function
+
+
+Private Function toNumber(s As String) As Variant
+    ' convert string to numeric , either double or long
+    If InStr(1, s, ".") Then
+        toNumber = CDbl(s)
+    Else
+        toNumber = CLng(s)
+    End If
+        
+End Function
+Private Function pointedAt(Optional pos As Long = 0) As String
+    ' return what ever the currently quoted character is
+    Dim k As Long
+    If pos = 0 Then
+        k = pPointer
+    Else
+        k = pos
+    End If
+    pointedAt = Mid(pJstring, k, 1)
+End Function
+Private Function getQuotedItem(Optional whichQ As String = "") As String
+    Dim s As String, k As Long, wq As String
+    ignoreNoise
+    s = ""
+    If isQuote(pointedAt, whichQ) Then
+        wq = pointedAt
+    ' extract until the next matching quote
+        k = pPointer + 1
+        While Not isQuote(pointedAt(k), wq)
+            s = s & pointedAt(k)
+            k = k + 1
+        Wend
+        pPointer = k + 1
+    End If
+    getQuotedItem = s
+
+End Function
+Private Function getNumericItem() As String
+    Dim s As String, k As Long
+    ignoreNoise
+    s = ""
+    ' extract until the next matching quote
+    k = pPointer
+    While IsNumeric(pointedAt(k))
+        s = s & pointedAt(k)
+        k = k + 1
+    Wend
+    pPointer = pPointer + Len(s)
+    getNumericItem = s
+
+End Function
+Private Function isQuote(s As String, Optional whichQ As String = "") As Boolean
+    If Len(whichQ) = 0 Then
+        ' any quote
+        isQuote = (s = q Or s = qs)
+    Else
+        isQuote = (s = whichQ)
+    End If
+End Function
+Private Sub badJSON(whatNext As String)
+    MsgBox "got " & pointedAt & " expected --(" & whatNext & _
+        ")-- Bad JSON at character " & CStr(pPointer) & " starting at " & _
+        Mid(pJstring, pPointer)
+    pValid = False
+    
+End Sub
+
+Private Sub ignoreNoise(Optional pos As Long = 0, Optional extraNoise As String = "")
+    Dim k As Long, t As Long
+    If pos = 0 Then
+        t = pPointer
+    Else
+        t = pos
+    End If
+    For k = t To Len(pJstring)
+        If Not isNoisy(Mid(pJstring, k, 1), extraNoise) Then Exit For
+    Next k
+    pPointer = k
+End Sub
+Private Function isNoisy(s As String, Optional extraNoise As String = "") As Boolean
+    isNoisy = InStr(vbTab & " " & vbCrLf & vbCr & vbLf & extraNoise, s)
+End Function
+Private Function q() As String
+    q = Chr(34)
+End Function
+Private Function qs() As String
+    qs = Chr(39)
+End Function
+Private Function anyQ() As String
+    anyQ = q & qs
+End Function
+\\\--- END OF MODULE ---
+
+[Lib] 50 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Librería: Serializa y deserializa datos a pseudo-JSON
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+Public Const VERSION As String = "v0.1"
+'---------------------------------------------------------------------------------------
+Public Const LIB_NAME As String = "Lib_cJobject"
+Public Const LIB_FRIENDLY_NAME As String = "Serializa y deserializa datos a pseudo-JSON"
+
+Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Punto de entrada principal para la librería.
+'----------------------------------------------------------------------------------------------------
+Public Sub Main()
+
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto real de librería
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib()
+Debug.Print "> Inicio Lib.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = New LibClass
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!Lib.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Lib.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+Sub EjemploDeUso()
+    Dim cj As cJobject
+    Set cj = New cJobject
+    
+    cj.Init Nothing, "Validation"
+    cj.Add "Tipo", 0
+    
+    Dim data As String: data = cj.Serialize
+    
+    Dim Deserred As cJobject
+    Set Deserred = New cJobject
+    Deserred.deSerialize (data)
+    
+    Debug.Print Deserred.Serialize
+End Sub
+\\\--- END OF MODULE ---
+
+[LibClass] 21 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Public ErrNum, ErrDesc
+
+Public Function Init() As Object
+Debug.Print "> Inicio LibClass.Init()"
+On Error GoTo Outer_Error
+
+    Set Init = Me
+    'Set Init = new Clase
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!LibClass.Init] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin LibClass.Init()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+Public Function New_cJobject() As Object
+Set New_cJobject = New cJobject
+End Function
+\\\--- END OF MODULE ---
+
+
+** Fin del proceso de exportación. **
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17

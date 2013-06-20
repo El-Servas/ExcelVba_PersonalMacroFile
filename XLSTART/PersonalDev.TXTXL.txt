@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 763
+ * Líneas de código VB: 806
 
 Detalle
 =======
@@ -612,7 +612,7 @@ Public Function GetRunHelper() As RunHelperClass
 End Function
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 75 líneas de código.
+[BookLoaderClass] 94 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -664,8 +664,12 @@ Private Sub RestoreCurrentBook()
 End Sub
 
 Private Sub CloseBook()
-    If Not SummonedBook Is Nothing Then SummonedBook.Close False
+    If Not SummonedBook Is Nothing Then Debug.Print "Cerrando libro de librería [" & SummonedBook.Name & "]": SummonedBook.Close False
     Set SummonedBook = Nothing
+End Sub
+
+Private Sub Class_Initialize()
+    LeaveBookOpenOnTerminate = True
 End Sub
 
 'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
@@ -689,6 +693,21 @@ Public Function GetFunctionName(Optional rutina As String = LIB_MAIN_FUNCTION_NA
     GetFunctionName = SummonedBook.Name & "!" & LIB_MODULE_NAME & "." & rutina
 End Function
 
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto principal de la librería.
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib() As Object
+Debug.Print "> Inicio BookLoaderClass.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = Application.Run(GetFunctionName("GetLib"))
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!BookLoaderClass.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin BookLoaderClass.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
 \\\--- END OF MODULE ---
 
 [Config] 65 líneas de código.
@@ -698,7 +717,7 @@ End Function
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : v1.4 - 2013-06-14
+' Version   : v1.5 - 2013-06-20
 '---------------------------------------------------------------------------------------
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
@@ -815,7 +834,7 @@ Public Function NumVisibleBooks() As Integer
 End Function
 \\\--- END OF MODULE ---
 
-[RunHelperClass] 46 líneas de código.
+[RunHelperClass] 70 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : RunHelperClass
@@ -859,12 +878,36 @@ On Error GoTo DelegateError
     Dim BL As BookLoaderClass: Set BL = New BookLoaderClass
     BL.ErrNum = 0: BL.OpenLibBook (bookFileName)
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    
     Set OpenLibBook = BL
 DelegateError:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Abre un libro de librería, obtiene la clase, la inicializa y la regresa.
+'----------------------------------------------------------------------------------------------------
+Public Function GetLibClass(bookFileName As String) As Object
+Debug.Print "> Inicio RunHelperClass.GetLibClass()"
+On Error GoTo Outer_Error
+
+    ErrNum = 0: Dim BL: Set BL = OpenLibBook(bookFileName)
+    If ErrNum <> 0 Then Err.Raise ErrNum, , ErrDesc
+    
+    BL.ErrNum = 0: Dim Lib: Set Lib = BL.GetLib()
+    If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    
+    Set Lib = Lib.Init()
+    Set GetLibClass = Lib
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!RunHelperClass.GetLibClass] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin RunHelperClass.GetLibClass()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Function
 \\\--- END OF MODULE ---
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.10 - 2013-06-17

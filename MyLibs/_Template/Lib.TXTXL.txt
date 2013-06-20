@@ -1,0 +1,111 @@
+Representación Textual del archivo de Excel: "Lib.xls"
+
+Resumen
+=======
+
+ * Hojas: 1
+
+ * Nombres Definidos: 0
+
+ * Módulos de Visual Basic: 4
+
+ * Líneas de código VB: 59
+
+Detalle
+=======
+
+Hojas:
+ [Sheet1]
+
+Contenido:
+[Sheet1]
+
+Nombres:
+
+Nombre del proyecto VB: [LIB_NAME]
+
+Módulos VBA:
+ [ThisWorkbook] Tipo: 100
+ [Sheet1] Tipo: 100
+ [Lib] Tipo: 1
+ [LibClass] Tipo: 2
+
+Codigo:
+[ThisWorkbook] 5 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+Application.Run "Personal.xlsb!ExportToTxt", ThisWorkbook
+End Sub
+\\\--- END OF MODULE ---
+
+[Sheet1] 2 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+\\\--- END OF MODULE ---
+
+[Lib] 34 líneas de código.
+///--- BEGINNING OF MODULE ---
+'---------------------------------------------------------------------------------------
+' Librería:
+'---------------------------------------------------------------------------------------
+
+Option Explicit
+Public Const VERSION As String = "v0.1"
+'---------------------------------------------------------------------------------------
+Public Const LIB_NAME As String = "Lib_"
+Public Const LIB_FRIENDLY_NAME As String = ""
+
+Public ErrNum, ErrDesc
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Punto de entrada principal a la librería.
+'----------------------------------------------------------------------------------------------------
+Public Sub Main()
+
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa el objeto real de librería
+'----------------------------------------------------------------------------------------------------
+Public Function GetLib()
+Debug.Print "> Inicio Lib.GetLib()"
+On Error GoTo Outer_Error
+
+    Set GetLib = New LibClass
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!Lib.GetLib] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin Lib.GetLib()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+\\\--- END OF MODULE ---
+
+[LibClass] 18 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Public ErrNum, ErrDesc
+
+Public Function Init() As Object
+Debug.Print "> Inicio LibClass.Init()"
+On Error GoTo Outer_Error
+
+    Set Init = Me
+    'Set Init = new Clase
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
+    If Err.Number <> 0 Then Debug.Print "[" & ThisWorkbook.Name & "!LibClass.Init] " & Err.Number & ". " & Err.Description
+    Debug.Print "> Fin LibClass.Init()": Debug.Print
+    'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
+    ErrNum = Err.Number: ErrDesc = Err.Description
+End Function
+
+\\\--- END OF MODULE ---
+
+
+** Fin del proceso de exportación. **
+Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
