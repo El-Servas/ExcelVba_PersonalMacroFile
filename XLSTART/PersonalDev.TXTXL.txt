@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 806
+ * Líneas de código VB: 824
 
 Detalle
 =======
@@ -19,6 +19,7 @@ Hojas:
 
 Contenido:
 [Sheet1]
+[A1] \ \
 
 Nombres:
 
@@ -612,7 +613,7 @@ Public Function GetRunHelper() As RunHelperClass
 End Function
 \\\--- END OF MODULE ---
 
-[BookLoaderClass] 94 líneas de código.
+[BookLoaderClass] 99 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -621,6 +622,8 @@ Private SummonedBook As Workbook
 Private LeaveBookOpenOnTerminate As Boolean
 
 Private FSO As New Scripting.FileSystemObject
+
+Private Const DEFAULT_LEAVE_BOOK_OPEN As Boolean = False
 
 Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
 
@@ -664,12 +667,15 @@ Private Sub RestoreCurrentBook()
 End Sub
 
 Private Sub CloseBook()
-    If Not SummonedBook Is Nothing Then Debug.Print "Cerrando libro de librería [" & SummonedBook.Name & "]": SummonedBook.Close False
+    If Not SummonedBook Is Nothing Then
+        'Debug.Print "[BookLoaderClas] Cerrando libro de librería [" & SummonedBook.Name & "]"
+        SummonedBook.Close False
+    End If
     Set SummonedBook = Nothing
 End Sub
 
 Private Sub Class_Initialize()
-    LeaveBookOpenOnTerminate = True
+    LeaveBookOpenOnTerminate = DEFAULT_LEAVE_BOOK_OPEN
 End Sub
 
 'Cuando la clase se destruye, cierra el libro, y recupera el modo de cálculo
@@ -834,7 +840,7 @@ Public Function NumVisibleBooks() As Integer
 End Function
 \\\--- END OF MODULE ---
 
-[RunHelperClass] 70 líneas de código.
+[RunHelperClass] 83 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : RunHelperClass
@@ -848,6 +854,8 @@ Option Explicit
 Private BackupCalculationMode As XlCalculation 'Para guardar el modo de cálculo.
 
 Private Utils As New UtilsClass
+
+Private BookLibrariesCollection As New Collection
 
 Public ErrNum, ErrDesc 'Auxiliares para detalles de error, por si se sigue el modelo de manejo de errores tipo delegado.
 
@@ -868,9 +876,15 @@ Private Sub RestoreCalculation()
     On Error GoTo 0
 End Sub
 
+Private Sub Class_Initialize()
+Debug.Print "[RunHelperClass] Iniciando."
+End Sub
+
 Private Sub Class_Terminate()
     'Debug.Print "RunHelperClass.Terminate()"
     If BackupCalculationMode <> 0 Then RestoreCalculation
+    Set BookLibrariesCollection = Nothing
+    Debug.Print "[RunHelperClass] Librerías liberadas."
 End Sub
 
 Public Function OpenLibBook(bookFileName As String) As BookLoaderClass
@@ -896,6 +910,11 @@ On Error GoTo Outer_Error
     
     BL.ErrNum = 0: Dim Lib: Set Lib = BL.GetLib()
     If BL.ErrNum <> 0 Then Err.Raise BL.ErrNum, , BL.ErrDesc
+    
+    'Vamos a agregar BookLoaderClass a la colección
+    On Error Resume Next
+    BookLibrariesCollection.Add BL, bookFileName
+    On Error GoTo Outer_Error
     
     Set Lib = Lib.Init()
     Set GetLibClass = Lib
