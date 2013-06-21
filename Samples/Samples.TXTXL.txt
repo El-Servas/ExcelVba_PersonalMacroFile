@@ -1,5 +1,5 @@
 Representación Textual del archivo de Excel: "Samples.xls"
-Fecha y hora de generación: 19/06/2013 01:06:53 p.m.
+Fecha y hora de generación: 21/06/2013 03:44:32 p.m.
 
 Resumen
 =======
@@ -8,9 +8,9 @@ Resumen
 
  * Nombres Definidos: 0
 
- * Módulos de Visual Basic: 3
+ * Módulos de Visual Basic: 4
 
- * Líneas de código VB: 44
+ * Líneas de código VB: 82
 
 Detalle
 =======
@@ -32,6 +32,7 @@ Módulos VBA:
  [ThisWorkbook] Tipo: 100
  [Sheet1] Tipo: 100
  [Module1] Tipo: 1
+ [Discardable] Tipo: 1
 
 Codigo:
 [ThisWorkbook] 2 líneas de código.
@@ -46,7 +47,7 @@ Option Explicit
 
 \\\--- END OF MODULE ---
 
-[Module1] 40 líneas de código.
+[Module1] 41 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 
@@ -68,7 +69,7 @@ On Error GoTo Outer_Error
     Dim cj
     Set cj = Lib.New_cJobject()
 
-    cj.init Nothing, "Validation"
+    cj.Init Nothing, "Validation"
     cj.Add "Tipo", 0
 
     Dim data As String: data = cj.Serialize
@@ -88,8 +89,50 @@ Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
     'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
     'ErrNum = Err.Number: ErrDesc = Err.Description
 End Sub
+
+\\\--- END OF MODULE ---
+
+[Discardable] 37 líneas de código.
+///--- BEGINNING OF MODULE ---
+Option Explicit
+
+Private col As Collection
+
+Sub test()
+    Dim RH: Set RH = Application.Run("PersonalDev.xlsb!GetRunHelper")
+    
+    Dim Lib: Set Lib = RH.GetLibClass("cJobject.xls")
+    Dim Lib2: Set Lib2 = RH.GetLibClass("ExportToTxt.xls")
+    
+    Debug.Print "¿Libro Abierto?"
+    Dim cj
+    Set cj = Lib.New_cJobject()
+    cj.Init Nothing, "Validation"
+    cj.Add "Tipo", 0
+    
+    Dim data As String: data = cj.Serialize
+    Debug.Print data
+End Sub
+
+Sub closebooks()
+On Error Resume Next
+    Workbooks("cJobject.xls").Close
+    Workbooks("ExportToTxt.xls").Close
+On Error GoTo 0
+End Sub
+
+Sub TestCollections()
+Set col = New Collection
+col.Add New UtilsClass
+col.Add New UtilsClass
+col.Add New UtilsClass
+
+Debug.Print "Algo..."
+
+Set col = Nothing 'Debe de liberar las tres referencias.
+End Sub
 \\\--- END OF MODULE ---
 
 
 ** Fin del proceso de exportación. Proceso realizado en 0.00 minutos. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.10 - 2013-06-17
+Lib_ExportToTxt [ExportToTxt.xls] v2.11.1
