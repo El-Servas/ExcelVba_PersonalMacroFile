@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 961
+ * Líneas de código VB: 1010
 
 Detalle
 =======
@@ -19,7 +19,6 @@ Hojas:
 
 Contenido:
 [Sheet1]
-[A1] \ \
 
 Nombres:
 
@@ -787,7 +786,7 @@ Private Sub ShortcutsDev()
 End Sub
 \\\--- END OF MODULE ---
 
-[UtilsClass] 186 líneas de código.
+[UtilsClass] 235 líneas de código.
 ///--- BEGINNING OF MODULE ---
 ' Module Header v1.0 - 2013-06-28.
 '---------------------------------------------------------------------------------------
@@ -975,6 +974,55 @@ Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
     ErrNum = Err.Number: ErrDesc = Err.Description
     'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
 End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un string con formato de tiempo para representar un intervalo: 05:45 min.
+'----------------------------------------------------------------------------------------------------
+Function FormatEllapsedTime(secondsEllapsed As Long) As String
+    Dim Time As String, Units As String
+    Time = GetEllapsedTime(secondsEllapsed)
+    Units = GetEllapsedUnits(secondsEllapsed)
+    FormatEllapsedTime = Time & " " & Units
+End Function
+
+Function GetEllapsedTime(secondsEllapsed As Long) As String
+    Dim SECS_IN_MINUTE As Integer: SECS_IN_MINUTE = 60
+    Dim Res As String
+    If secondsEllapsed / SECS_IN_MINUTE > 1 Then
+        Dim Minutes, SecondsLeft
+        Minutes = Int(secondsEllapsed / SECS_IN_MINUTE)
+        SecondsLeft = secondsEllapsed - (Minutes * SECS_IN_MINUTE)
+        Res = PadL(FormatNumber(Minutes, 0), 2, "0") & ":" & GetEllapsedTime(CLng(SecondsLeft))
+    Else
+        Res = PadL(FormatNumber(secondsEllapsed, 0), 2, "0")
+    End If
+    GetEllapsedTime = Res
+End Function
+
+Function GetEllapsedUnits(secondsEllapsed As Long) As String
+    Dim SECS_IN_MINUTE As Integer: SECS_IN_MINUTE = 60
+    Dim Res As String, Units As String
+    If secondsEllapsed / SECS_IN_MINUTE > 1 Then
+        Res = "min."
+    Else
+        Res = "sec."
+    End If
+    GetEllapsedUnits = Res
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Agrega caracteres a la izquierda de un string.
+'----------------------------------------------------------------------------------------------------
+Function PadL(str As String, leng As Integer, Optional char As String = " ") As String
+    Dim Res As String
+    If Len(str) < leng Then
+        Res = String(leng - Len(str), char) & str
+    Else
+        Res = str
+    End If
+    PadL = Res
+End Function
+
 \\\--- END OF MODULE ---
 
 [RunHelperClass] 83 líneas de código.
@@ -1066,4 +1114,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.11.1
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.11.1 [Con Cambios de APM]
