@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 868
+ * Líneas de código VB: 961
 
 Detalle
 =======
@@ -716,7 +716,7 @@ Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
 End Function
 \\\--- END OF MODULE ---
 
-[Config] 65 líneas de código.
+[Config] 67 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' File      : Archivo Personal de Macros (APM)
@@ -725,6 +725,8 @@ End Function
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
 ' Version   : POST v1.7
 '---------------------------------------------------------------------------------------
+
+Global Const PRINT_PROC_DELIMITERS As Boolean = False
 
 'Path relativa al libro actual en donde se encuentran los archivos de librerías.
 Public Const LIB_PATH As String = "..\MyLibs"
@@ -785,8 +787,9 @@ Private Sub ShortcutsDev()
 End Sub
 \\\--- END OF MODULE ---
 
-[UtilsClass] 95 líneas de código.
+[UtilsClass] 186 líneas de código.
 ///--- BEGINNING OF MODULE ---
+' Module Header v1.0 - 2013-06-28.
 '---------------------------------------------------------------------------------------
 ' Module    : UtilsClass
 ' Author    : +
@@ -794,6 +797,9 @@ End Sub
 ' Purpose   : Clase con métodos ayudantes y utilitarios.
 '---------------------------------------------------------------------------------------
 Option Explicit
+
+Public ErrNum, ErrDesc
+'----------------------------------------------------------------------------------------------------
 
 'Para construir la ruta al folder de Auto Start:
 Private Const AUTO_START_PATH_PREFIX As String = "AppData" 'Variable de entorno a expandir.
@@ -882,6 +888,93 @@ Sub CallMethodWithVarParams(instance As Object, procName As String, args As Coll
         CallByName instance, procName, callType, args(1), args(2), args(3), args(4), args(5)
     End Select
 End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Regresa una colección con los elementos de une arreglo.
+'----------------------------------------------------------------------------------------------------
+Function ArrToCol(rg) As Collection
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio UtilsClass.ArrToCol()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    Dim Res As New Collection
+    Dim item
+    For Each item In rg
+        Res.Add (item)
+    Next
+    Set ArrToCol = Res
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!UtilsClass.ArrToCol()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin UtilsClass.ArrToCol()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa un arreglo con los elementos de una colección.
+'----------------------------------------------------------------------------------------------------
+Function ColToArr(c As Collection) As Variant()
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio UtilsClass.ColToArr()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    Dim a() As Variant: ReDim a(0 To c.Count - 1)
+    Dim i As Integer
+    For i = 1 To c.Count
+        a(i - 1) = c.item(i)
+    Next
+    ColToArr = a
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!UtilsClass.ColToArr()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin UtilsClass.ColToArr()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Regresa una colección nueva con los elementos de otra colección.
+'----------------------------------------------------------------------------------------------------
+Function CopyCollectionItems(colToCopy As Collection) As Collection
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio UtilsClass.CopyCollectionItems()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    Dim Res As New Collection
+    Dim item As Variant
+    For Each item In colToCopy
+        Res.Add (item)
+    Next
+    Set CopyCollectionItems = Res
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!UtilsClass.CopyCollectionItems()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin UtilsClass.CopyCollectionItems()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Agrega un elemento al inicio de una colección.
+'----------------------------------------------------------------------------------------------------
+Function CollectionAddFirst(colToAdd As Collection, item As Variant)
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio UtilsClass.CollectionAddFirst()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    If colToAdd.Count <> 0 Then
+        colToAdd.Add item, , 1
+    Else
+        colToAdd.Add item
+    End If
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!UtilsClass.CollectionAddFirst()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin UtilsClass.CollectionAddFirst()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Function
 \\\--- END OF MODULE ---
 
 [RunHelperClass] 83 líneas de código.
