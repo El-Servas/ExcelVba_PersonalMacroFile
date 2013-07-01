@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 7
 
- * Líneas de código VB: 794
+ * Líneas de código VB: 800
 
 Detalle
 =======
@@ -55,7 +55,7 @@ End Sub
 '---------------------------------------------------------------------------------------
 
 Option Explicit
-Public Const VERSION As String = "v2.11.1"
+Public Const VERSION As String = "POST v2.11.1 [Con Cambios de APM]"
 '---------------------------------------------------------------------------------------
 Public Const LIB_NAME As String = "Lib_ExportToTxt"
 Public Const LIB_FRIENDLY_NAME As String = "Exportación a Texto"
@@ -109,7 +109,7 @@ Sub PlantillaParaLlamarADelegado()
 End Sub
 \\\--- END OF MODULE ---
 
-[ExportClass] 507 líneas de código.
+[ExportClass] 513 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 '---------------------------------------------------------------------------------------
@@ -117,6 +117,9 @@ Option Explicit
 ' Author    : +
 ' Date      : 18/06/2013
 ' Purpose   : Encapsula la funcionalidad de la exportación.
+'---------------------------------------------------------------------------------------
+
+Private ErrNum, ErrDesc
 '---------------------------------------------------------------------------------------
 
 Private Const TOKEN_PRE_EXTENSION = ".TXTXL"
@@ -139,28 +142,25 @@ Private Const TOKEN_MESSAGEBOX_TITLE As String = LIB_FRIENDLY_NAME
 Private Const ERROR_1 As String = "Proceso cancelado manualmente."
 Private Const ERROR_2 As String = TOKEN_BOOK_IN_AUTOSTART
 
-Private Const AUTO_START_PATH_PREFIX As String = "AppData"
-Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
-
 Private RH 'La clase RunHelper.
+Private Utils
 Private FSO As New Scripting.FileSystemObject
 Private Stream As TextStream 'El stream donde vamos a escribir el archivo
 Private DvInfo As DvInfoClass 'Clase que nos va a dar la información de DataValidation.
-Private flVisual As Boolean 'Bandera que define si la ejecución es con confirmación visual.
+Private flVisual As Boolean 'Define si la ejecución es con confirmación visual.
+Private flBookInAutoStartPath As Boolean 'Indica si el libro a exportar está en la ruta automática.
+Private flVBProjectIsProtected As Boolean 'Indica si el proyecto VB está protegido.
 
 Private BTE As Workbook '(BookToExport) Referencia al libro que vamos a exportar.
-Private VBProjectIsProtected As Boolean
 Private StartTime As Date _
-        , EllapsedMinutes As String 'Para cronometrar el proceso.
-        
-Private ExpandedAutoStartPath As String
-Private flBookInAutoStartPath As Boolean
-
-Private ErrNum, ErrDesc 'Auxiliares para mantener los detalles del error si ocurre durante la ejecución de un delegado.
+        , EllapsedSeconds As Long _
+        , EllapsedLegend As String 'Para cronometrar el proceso.
 
 Private Sub Class_Initialize()
-    Set RH = Application.Run("Personal.xlsb!GetRunHelper")
-    Set FSO = RH.GetUtils().GetFSO()
+    'Set RH = Application.Run("Personal.xlsb!GetRunHelper")
+    Set RH = Application.Run("PersonalDev.xlsb!GetRunHelper")
+    Set Utils = RH.GetUtils()
+    Set FSO = Utils.GetFSO()
     Set DvInfo = New DvInfoClass
 End Sub
 
@@ -187,7 +187,7 @@ On Error GoTo Catch
         MensajeFinal
     
         'Fin del proceso. Confirmación visual si aplica.
-        If flVisual Then Call MsgBox("Proceso terminado en " & EllapsedMinutes & " minutos.", vbInformation Or vbDefaultButton1, TOKEN_MESSAGEBOX_TITLE)
+        If flVisual Then Call MsgBox("Proceso terminado en " & EllapsedLegend & "", vbInformation Or vbDefaultButton1, TOKEN_MESSAGEBOX_TITLE)
     End If
 Catch:
     If Err.Number <> 0 Then
@@ -206,9 +206,8 @@ End Sub
 'Purpose: Realiza unas verificaciones antes de iniciar el proceso de exportación.
 '----------------------------------------------------------------------------------------------------
 Sub PreFlight()
-    'Construye y revisa la ruta de exclusión.
-    ExpandedAutoStartPath = FSO.BuildPath(Environ(AUTO_START_PATH_PREFIX), AUTO_START_PATH_SUFFIX)
-    If UCase(BTE.Path) = UCase(ExpandedAutoStartPath) Then
+    'Revisa la ruta de exclusión.
+    If Utils.IsAutoStartPath(BTE.Path) Then
         flBookInAutoStartPath = True
         Debug.Print "El archivo a exportar está en la ruta AutoStart."
     Else
@@ -216,7 +215,7 @@ Sub PreFlight()
     End If
     
     'Ajusta la bandera si el proyecto de VB está protegido.
-    VBProjectIsProtected = BTE.VBProject.Protection = vbext_pp_locked
+    flVBProjectIsProtected = BTE.VBProject.Protection = vbext_pp_locked
 End Sub
 
 Function GetTXTFileName() As String
@@ -249,7 +248,7 @@ Function ConfirmarEjecucion() As Boolean
     End If
     
     'Estado de la protección del proyecto VB.
-    If VBProjectIsProtected Then
+    If flVBProjectIsProtected Then
         MensajeConfirmacion = MensajeConfirmacion & "* " & UCase(TOKEN_VBPROJECT_PROTECTED) & vbCrLf
     Else
         MensajeConfirmacion = MensajeConfirmacion & "* " & "El proyecto de Visual Basic es accesible." & vbCrLf
@@ -293,7 +292,7 @@ Sub GenResumen()
     Log " * Nombres Definidos: " & NumeroNombresDefinidos
     Log
     
-    If Not VBProjectIsProtected Then
+    If Not flVBProjectIsProtected Then
         Dim NumeroModulosVB As Integer: NumeroModulosVB = GetNumModulosVB
         Log " * Módulos de Visual Basic: " & NumeroModulosVB
         Log
@@ -361,7 +360,7 @@ Sub GenModulos()
     Log
     
     'Antes de intentar acceder a los módulos, verificamos que el proyecto no esté protegido:
-    If Not VBProjectIsProtected Then
+    If Not flVBProjectIsProtected Then
         Log TOKEN_MODULOS_TITLE
         IteraModulos "ImprimeNombreDeModulo"
         Log
@@ -607,16 +606,23 @@ End Sub
 Sub MensajeFinal()
     Dim MensajeFinal As String
     
-    'Calculamos el tiempo empleado
-    EllapsedMinutes = FormatNumber(DateDiff("s", StartTime, Date + Time) / 60, 2)
+    CalculaTiempoEmpleado
     
     'Construimos el mensaje.
     MensajeFinal = "** Fin del proceso de exportación."
-    If flVisual Then MensajeFinal = MensajeFinal & " Proceso realizado en " & EllapsedMinutes & " minutos."
+    If flVisual Then MensajeFinal = MensajeFinal & " Proceso realizado en " & EllapsedLegend & " "
     MensajeFinal = MensajeFinal & " **"
     
     Log MensajeFinal
     Log GenVersionString()
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Calcula y formatea el tiempo utilizado.
+'----------------------------------------------------------------------------------------------------
+Sub CalculaTiempoEmpleado()
+    EllapsedSeconds = DateDiff("s", StartTime, Date + Time)
+    EllapsedLegend = Utils.FormatEllapsedTime(EllapsedSeconds)
 End Sub
 \\\--- END OF MODULE ---
 
@@ -858,4 +864,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.11.1
+Lib_ExportToTxt [ExportToTxt.xls] POST v2.11.1 [Con Cambios de APM]
