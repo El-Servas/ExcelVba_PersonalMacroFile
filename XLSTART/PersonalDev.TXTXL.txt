@@ -7,9 +7,9 @@ Resumen
 
  * Nombres Definidos: 0
 
- * Módulos de Visual Basic: 15
+ * Módulos de Visual Basic: 16
 
- * Líneas de código VB: 1010
+ * Líneas de código VB: 1087
 
 Detalle
 =======
@@ -40,6 +40,7 @@ Módulos VBA:
  [Config] Tipo: 1
  [UtilsClass] Tipo: 2
  [RunHelperClass] Tipo: 2
+ [LoggerClass] Tipo: 2
 
 Codigo:
 [Interactive] 122 líneas de código.
@@ -1025,7 +1026,7 @@ End Function
 
 \\\--- END OF MODULE ---
 
-[RunHelperClass] 83 líneas de código.
+[RunHelperClass] 87 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : RunHelperClass
@@ -1110,6 +1111,87 @@ Outer_Error: 'Error Handler v1.1 - 2013-06-19 by +
     'Descomentar si esta rutina se va a llamar desde otro módulo/proyecto:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Function
+
+Public Function GetLogger() As LoggerClass
+    Set GetLogger = New LoggerClass
+End Function
+\\\--- END OF MODULE ---
+
+[LoggerClass] 73 líneas de código.
+///--- BEGINNING OF MODULE ---
+' Module Header v1.0 - 2013-06-28.
+'---------------------------------------------------------------------------------------
+' Module    : LoggerClass
+' Author    : +
+' Date      : 01/07/2013
+' Purpose   : Escribe líneas a un archivo.
+'---------------------------------------------------------------------------------------
+Option Explicit
+
+Public ErrNum, ErrDesc
+'----------------------------------------------------------------------------------------------------
+
+Private RH As Object
+Private Utils As Object
+Private FSO As Object
+Private Stream As Object
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Inicializa una nueva instancia de un stream. Sobreescribe el archivo si existe.
+'----------------------------------------------------------------------------------------------------
+Public Sub CreateNewStream(FileName As String)
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio LoggerClass.CreateNewStream()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    Set RH = New RunHelperClass
+    Set Utils = RH.GetUtils()
+    Set FSO = Utils.GetFSO()
+    Set Stream = FSO.CreateTextFile(FileName, True, False)
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!LoggerClass.CreateNewStream()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin LoggerClass.CreateNewStream()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose:Escribe una linea en el Stream.
+'----------------------------------------------------------------------------------------------------
+Public Sub Log(Optional Mensaje As String)
+If PRINT_PROC_DELIMITERS Then Debug.Print "> Inicio LoggerClass.Log()"
+On Error GoTo Outer_Error
+'----------------------------------------------------------------------------------------------------
+    'Debug.Print Mensaje
+    Stream.WriteLine (Mensaje)
+'----------------------------------------------------------------------------------------------------
+On Error GoTo 0
+Outer_Error: 'Error Handler v1.2 - 2013-06-28. Requires Module Header v1.0
+    If Err.Number <> 0 Then Err.Description = Err.Description & vbCrLf & " - [" & ThisWorkbook.Name & "!LoggerClass.Log()]": Debug.Print "[Error] " & Err.Number & ". " & Err.Description
+    If PRINT_PROC_DELIMITERS Then Debug.Print "> Fin LoggerClass.Log()" & vbCrLf
+    ErrNum = Err.Number: ErrDesc = Err.Description
+    'Err.Raise Err.Number, , Err.Description 'Descomentar si se quiere que el error se marque aquí en lugar de burbujear.
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Regresa verdadero si al intentar accesar el Stream, marca error. (Se asume que está cerrada)
+'----------------------------------------------------------------------------------------------------
+Public Function StreamClosed() As Boolean
+    On Error GoTo IsClosed
+    StreamClosed = Stream.AtEndOfLine
+    StreamClosed = False 'No marcó error, el Stream no está cerrado.
+    Exit Function
+IsClosed:
+    StreamClosed = True
+End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Cierra el Stream. Múltiples llamadas a Stream.Close no causan error.
+'----------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+    If Not Stream Is Nothing Then Stream.Close
+End Sub
 \\\--- END OF MODULE ---
 
 
