@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 15
 
- * Líneas de código VB: 824
+ * Líneas de código VB: 868
 
 Detalle
 =======
@@ -785,7 +785,7 @@ Private Sub ShortcutsDev()
 End Sub
 \\\--- END OF MODULE ---
 
-[UtilsClass] 51 líneas de código.
+[UtilsClass] 95 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Module    : UtilsClass
@@ -838,6 +838,50 @@ Public Function NumVisibleBooks() As Integer
         If wnd.Visible Then NumVisibleBooks = NumVisibleBooks + 1
     Next
 End Function
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Recibe un nombre de macro y una colección de parámetros para usarse con Application.Run().
+'Soporta hasta 5 parámetros.
+'----------------------------------------------------------------------------------------------------
+Sub CallFunctWithVarParams(macroName As String, args As Collection)
+    Dim NumParams As Integer: NumParams = args.Count
+    Select Case NumParams
+    Case 0
+        Application.Run macroName
+    Case 1
+        Application.Run macroName, args(1)
+    Case 2
+        Application.Run macroName, args(1), args(2)
+    Case 3
+        Application.Run macroName, args(1), args(2), args(3)
+    Case 4
+        Application.Run macroName, args(1), args(2), args(3), args(4)
+    Case 5
+        Application.Run macroName, args(1), args(2), args(3), args(4), args(5)
+    End Select
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Recibe un objeto, el nombre de un método y una colección de parámetros para usarse con CallByName().
+'Soporta hasta 5 parámetros.
+'----------------------------------------------------------------------------------------------------
+Sub CallMethodWithVarParams(instance As Object, procName As String, args As Collection, Optional callType As VbCallType = VbCallType.VbMethod)
+    Dim NumParams As Integer: NumParams = args.Count
+    Select Case NumParams
+    Case 0
+        CallByName instance, procName, callType
+    Case 1
+        CallByName instance, procName, callType, args(1)
+    Case 2
+        CallByName instance, procName, callType, args(1), args(2)
+    Case 3
+        CallByName instance, procName, callType, args(1), args(2), args(3)
+    Case 4
+        CallByName instance, procName, callType, args(1), args(2), args(3), args(4)
+    Case 5
+        CallByName instance, procName, callType, args(1), args(2), args(3), args(4), args(5)
+    End Select
+End Sub
 \\\--- END OF MODULE ---
 
 [RunHelperClass] 83 líneas de código.
