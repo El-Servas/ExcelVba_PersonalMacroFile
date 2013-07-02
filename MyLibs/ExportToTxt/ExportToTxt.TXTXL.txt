@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 7
 
- * Líneas de código VB: 787
+ * Líneas de código VB: 786
 
 Detalle
 =======
@@ -56,7 +56,7 @@ End Sub
 Global Const PRINT_PROC_DELIMITERS As Boolean = False
 
 Option Explicit
-Public Const VERSION As String = "POST v2.11.1 [Con Cambios de APM]"
+Public Const VERSION As String = "v2.12"
 '---------------------------------------------------------------------------------------
 
 Public Const LIB_NAME As String = "Lib_ExportToTxt"
@@ -111,7 +111,7 @@ Sub PlantillaParaLlamarADelegado()
 End Sub
 \\\--- END OF MODULE ---
 
-[ExportClass] 498 líneas de código.
+[ExportClass] 497 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 '---------------------------------------------------------------------------------------
@@ -159,8 +159,7 @@ Private StartTime As Date _
         , EllapsedLegend As String 'Para cronometrar el proceso.
 
 Private Sub Class_Initialize()
-    'Set RH = Application.Run("Personal.xlsb!GetRunHelper")
-    Set RH = Application.Run("PersonalDev.xlsb!GetRunHelper")
+    Set RH = Application.Run("Personal.xlsb!GetRunHelper")
     Set Utils = RH.GetUtils()
     Set FSO = Utils.GetFSO()
     Set Logger = RH.GetLogger()
@@ -851,4 +850,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] POST v2.11.1 [Con Cambios de APM]
+Lib_ExportToTxt [ExportToTxt.xls] v2.12
