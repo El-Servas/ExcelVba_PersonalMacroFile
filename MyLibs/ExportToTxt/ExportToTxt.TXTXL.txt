@@ -9,7 +9,7 @@ Resumen
 
  * Módulos de Visual Basic: 7
 
- * Líneas de código VB: 794
+ * Líneas de código VB: 786
 
 Detalle
 =======
@@ -48,15 +48,17 @@ End Sub
 ///--- BEGINNING OF MODULE ---
 \\\--- END OF MODULE ---
 
-[Lib] 36 líneas de código.
+[Lib] 38 líneas de código.
 ///--- BEGINNING OF MODULE ---
 '---------------------------------------------------------------------------------------
 ' Librería: Exporta una representación textual de un libro de Excel
 '---------------------------------------------------------------------------------------
+Global Const PRINT_PROC_DELIMITERS As Boolean = False
 
 Option Explicit
-Public Const VERSION As String = "v2.11.1"
+Public Const VERSION As String = "v2.12.1"
 '---------------------------------------------------------------------------------------
+
 Public Const LIB_NAME As String = "Lib_ExportToTxt"
 Public Const LIB_FRIENDLY_NAME As String = "Exportación a Texto"
 
@@ -109,7 +111,7 @@ Sub PlantillaParaLlamarADelegado()
 End Sub
 \\\--- END OF MODULE ---
 
-[ExportClass] 507 líneas de código.
+[ExportClass] 497 líneas de código.
 ///--- BEGINNING OF MODULE ---
 Option Explicit
 '---------------------------------------------------------------------------------------
@@ -117,6 +119,9 @@ Option Explicit
 ' Author    : +
 ' Date      : 18/06/2013
 ' Purpose   : Encapsula la funcionalidad de la exportación.
+'---------------------------------------------------------------------------------------
+
+Private ErrNum, ErrDesc
 '---------------------------------------------------------------------------------------
 
 Private Const TOKEN_PRE_EXTENSION = ".TXTXL"
@@ -139,28 +144,25 @@ Private Const TOKEN_MESSAGEBOX_TITLE As String = LIB_FRIENDLY_NAME
 Private Const ERROR_1 As String = "Proceso cancelado manualmente."
 Private Const ERROR_2 As String = TOKEN_BOOK_IN_AUTOSTART
 
-Private Const AUTO_START_PATH_PREFIX As String = "AppData"
-Private Const AUTO_START_PATH_SUFFIX As String = "Microsoft\Excel\XLSTART"
-
 Private RH 'La clase RunHelper.
+Private Utils
 Private FSO As New Scripting.FileSystemObject
-Private Stream As TextStream 'El stream donde vamos a escribir el archivo
+Private Logger As Object
 Private DvInfo As DvInfoClass 'Clase que nos va a dar la información de DataValidation.
-Private flVisual As Boolean 'Bandera que define si la ejecución es con confirmación visual.
+Private flVisual As Boolean 'Define si la ejecución es con confirmación visual.
+Private flBookInAutoStartPath As Boolean 'Indica si el libro a exportar está en la ruta automática.
+Private flVBProjectIsProtected As Boolean 'Indica si el proyecto VB está protegido.
 
 Private BTE As Workbook '(BookToExport) Referencia al libro que vamos a exportar.
-Private VBProjectIsProtected As Boolean
 Private StartTime As Date _
-        , EllapsedMinutes As String 'Para cronometrar el proceso.
-        
-Private ExpandedAutoStartPath As String
-Private flBookInAutoStartPath As Boolean
-
-Private ErrNum, ErrDesc 'Auxiliares para mantener los detalles del error si ocurre durante la ejecución de un delegado.
+        , EllapsedSeconds As Long _
+        , EllapsedLegend As String 'Para cronometrar el proceso.
 
 Private Sub Class_Initialize()
     Set RH = Application.Run("Personal.xlsb!GetRunHelper")
-    Set FSO = RH.GetUtils().GetFSO()
+    Set Utils = RH.GetUtils()
+    Set FSO = Utils.GetFSO()
+    Set Logger = RH.GetLogger()
     Set DvInfo = New DvInfoClass
 End Sub
 
@@ -174,7 +176,8 @@ On Error GoTo Catch
     If flVisual Then If Not ConfirmarEjecucion Then Err.Raise vbObjectError + 1, , ERROR_1
     
     If Not flBookInAutoStartPath Then
-        Set Stream = FSO.CreateTextFile(GetTXTFileName(), True, False)
+        Logger.ErrNum = 0: Logger.CreateNewStream (GetTXTFileName())
+        If Logger.ErrNum <> 0 Then Err.Raise Logger.ErrNum, , Logger.ErrDesc
         SaveSettings
         StartTime = Date + Time
         
@@ -187,7 +190,7 @@ On Error GoTo Catch
         MensajeFinal
     
         'Fin del proceso. Confirmación visual si aplica.
-        If flVisual Then Call MsgBox("Proceso terminado en " & EllapsedMinutes & " minutos.", vbInformation Or vbDefaultButton1, TOKEN_MESSAGEBOX_TITLE)
+        If flVisual Then Call MsgBox("Proceso terminado en " & EllapsedLegend & "", vbInformation Or vbDefaultButton1, TOKEN_MESSAGEBOX_TITLE)
     End If
 Catch:
     If Err.Number <> 0 Then
@@ -195,20 +198,19 @@ Catch:
         MensajeDeError = "Ocurrió un error al correr el proceso de exportación:" & vbCrLf & vbCrLf _
             & Err.Number & " " & Err.Description
         MsgBox MensajeDeError, vbCritical, TOKEN_MESSAGEBOX_TITLE
-        If Not StreamClosed() Then Log MensajeDeError
+        Logger.Log MensajeDeError
     End If
     
     RestoreSettings
-    If Not Stream Is Nothing Then Stream.Close
+    Set Logger = Nothing
 End Sub
 
 '----------------------------------------------------------------------------------------------------
 'Purpose: Realiza unas verificaciones antes de iniciar el proceso de exportación.
 '----------------------------------------------------------------------------------------------------
 Sub PreFlight()
-    'Construye y revisa la ruta de exclusión.
-    ExpandedAutoStartPath = FSO.BuildPath(Environ(AUTO_START_PATH_PREFIX), AUTO_START_PATH_SUFFIX)
-    If UCase(BTE.Path) = UCase(ExpandedAutoStartPath) Then
+    'Revisa la ruta de exclusión.
+    If Utils.IsAutoStartPath(BTE.Path) Then
         flBookInAutoStartPath = True
         Debug.Print "El archivo a exportar está en la ruta AutoStart."
     Else
@@ -216,7 +218,7 @@ Sub PreFlight()
     End If
     
     'Ajusta la bandera si el proyecto de VB está protegido.
-    VBProjectIsProtected = BTE.VBProject.Protection = vbext_pp_locked
+    flVBProjectIsProtected = BTE.VBProject.Protection = vbext_pp_locked
 End Sub
 
 Function GetTXTFileName() As String
@@ -249,7 +251,7 @@ Function ConfirmarEjecucion() As Boolean
     End If
     
     'Estado de la protección del proyecto VB.
-    If VBProjectIsProtected Then
+    If flVBProjectIsProtected Then
         MensajeConfirmacion = MensajeConfirmacion & "* " & UCase(TOKEN_VBPROJECT_PROTECTED) & vbCrLf
     Else
         MensajeConfirmacion = MensajeConfirmacion & "* " & "El proyecto de Visual Basic es accesible." & vbCrLf
@@ -282,37 +284,37 @@ Sub GenResumen()
     ' - Nombre del archivo
     GenEncabezado
     
-    Log "Resumen" & vbCrLf & "======="
-    Log
+    Logger.Log "Resumen" & vbCrLf & "======="
+    Logger.Log
     
     Dim NumeroHojas As Integer: NumeroHojas = GetNumHojas
-    Log " * Hojas: " & NumeroHojas
-    Log
+    Logger.Log " * Hojas: " & NumeroHojas
+    Logger.Log
     
     Dim NumeroNombresDefinidos As Integer: NumeroNombresDefinidos = GetNumNombres
-    Log " * Nombres Definidos: " & NumeroNombresDefinidos
-    Log
+    Logger.Log " * Nombres Definidos: " & NumeroNombresDefinidos
+    Logger.Log
     
-    If Not VBProjectIsProtected Then
+    If Not flVBProjectIsProtected Then
         Dim NumeroModulosVB As Integer: NumeroModulosVB = GetNumModulosVB
-        Log " * Módulos de Visual Basic: " & NumeroModulosVB
-        Log
+        Logger.Log " * Módulos de Visual Basic: " & NumeroModulosVB
+        Logger.Log
         
         Dim NumeroLineasCodigo As Integer: NumeroLineasCodigo = GetNumLineas
-        Log " * Líneas de código VB: " & NumeroLineasCodigo
+        Logger.Log " * Líneas de código VB: " & NumeroLineasCodigo
     Else
-        Log TOKEN_VBPROJECT_PROTECTED
+        Logger.Log TOKEN_VBPROJECT_PROTECTED
     End If
-    Log
+    Logger.Log
     
-    Log "Detalle" & vbCrLf & "======="
-    Log
+    Logger.Log "Detalle" & vbCrLf & "======="
+    Logger.Log
 End Sub
 
 Sub GenEncabezado()
-    Log TOKEN_HEADER & """" & BTE.name & """"
-    If flVisual Then Log "Fecha y hora de generación: " & Date + Time
-    Log
+    Logger.Log TOKEN_HEADER & """" & BTE.name & """"
+    If flVisual Then Logger.Log "Fecha y hora de generación: " & Date + Time
+    Logger.Log
 End Sub
 
 Function GetNumHojas() As Integer
@@ -341,37 +343,37 @@ End Function
 
 Sub GenHojas()
     '--- Lista de hojas
-    Log TOKEN_HOJAS_TITLE
+    Logger.Log TOKEN_HOJAS_TITLE
     IteraHojas "ImprimeNombreDeHoja"
-    Log
+    Logger.Log
     
     '--- Contenido de cada hoja
-    Log TOKEN_CONTENT_TITLE
+    Logger.Log TOKEN_CONTENT_TITLE
     IteraHojas "ProcesaContenidoDeHoja"
 End Sub
 
 Sub GenNombres()
-    Log TOKEN_NOMBRES_TITLE
+    Logger.Log TOKEN_NOMBRES_TITLE
     IteraNombres "ImprimeNombre"
-    Log
+    Logger.Log
 End Sub
 
 Sub GenModulos()
-    Log "Nombre del proyecto VB: [" & BTE.VBProject.name & "]"
-    Log
+    Logger.Log "Nombre del proyecto VB: [" & BTE.VBProject.name & "]"
+    Logger.Log
     
     'Antes de intentar acceder a los módulos, verificamos que el proyecto no esté protegido:
-    If Not VBProjectIsProtected Then
-        Log TOKEN_MODULOS_TITLE
+    If Not flVBProjectIsProtected Then
+        Logger.Log TOKEN_MODULOS_TITLE
         IteraModulos "ImprimeNombreDeModulo"
-        Log
+        Logger.Log
         
-        Log TOKEN_CODIGO_TITLE
+        Logger.Log TOKEN_CODIGO_TITLE
         IteraModulos "ProcesaModulo"
     Else
-        Log TOKEN_VBPROJECT_PROTECTED
+        Logger.Log TOKEN_VBPROJECT_PROTECTED
     End If
-    Log
+    Logger.Log
 End Sub
 
 'MODULOS VB
@@ -382,15 +384,15 @@ Sub ProcesaModulo(vbcomp As vbcomponent, iterationIndex As Integer)
 On Error GoTo DelegateError
     Dim CodeLines As Integer
     CodeLines = vbcomp.CodeModule.CountOfLines
-    Log "[" & vbcomp.name & "] " & CodeLines & " líneas de código."
+    Logger.Log "[" & vbcomp.name & "] " & CodeLines & " líneas de código."
     
-    Log TOKEN_MODULE_BEGINS
+    Logger.Log TOKEN_MODULE_BEGINS
     If CodeLines > 0 Then
-        Log vbcomp.CodeModule.Lines(1, CodeLines)
+        Logger.Log vbcomp.CodeModule.Lines(1, CodeLines)
     End If
-    Log TOKEN_MODULE_END
+    Logger.Log TOKEN_MODULE_END
     
-    Log
+    Logger.Log
 DelegateError:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Sub
@@ -398,7 +400,7 @@ End Sub
 'Delegate
 Sub ImprimeNombreDeModulo(vbcomp As vbcomponent, iterationIndex As Integer)
 On Error GoTo DelegateError
-    Log " [" & vbcomp.name & "] Tipo: " & vbcomp.Type
+    Logger.Log " [" & vbcomp.name & "] Tipo: " & vbcomp.Type
 DelegateError:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Sub
@@ -424,7 +426,7 @@ End Sub
 'Delegate
 Sub ImprimeNombre(name As name, iterationIndex As Integer)
 On Error GoTo DelegateError
-    Log " [" & name.name & "] " & name.RefersTo
+    Logger.Log " [" & name.name & "] " & name.RefersTo
 DelegateError:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Sub
@@ -450,7 +452,7 @@ On Error GoTo DelegateError
     Dim Mensaje As String
     If Not sheet.Visible Then Mensaje = Mensaje & " - Escondida"
     If sheet.ProtectContents Then Mensaje = Mensaje & " - Protegida"
-    Log " [" & sheet.name & "]" & Mensaje
+    Logger.Log " [" & sheet.name & "]" & Mensaje
 DelegateError:
     ErrNum = Err.Number: ErrDesc = Err.Description
 End Sub
@@ -479,9 +481,9 @@ On Error GoTo DelegateError
     End If
     
     'Procesamos las celdas.
-    Log "[" & sheet.name & "]" & Mensaje
+    Logger.Log "[" & sheet.name & "]" & Mensaje
     IteraCeldas sheet, "ProcesaCelda"
-    Log
+    Logger.Log
     
     'Reprotegemos si es necesario
     If BkHojaProtegida Then sheet.Protect
@@ -527,17 +529,17 @@ On Error GoTo DelegateError
     If CeldaSeProcesa Then
         'Insertamos el nombre de la hoja cada N celdas
         If iterationIndex Mod SHEET_TITLE_CELL_LISTING_THRESHOLD = 0 And iterationIndex <> 0 Then
-            Log "[" & cell.Parent.name & "]"
+            Logger.Log "[" & cell.Parent.name & "]"
         End If
         Direccion = cell.Address(False, False): Direccion = "[" & Direccion & "] "
         NombreDefinido = GetNameOfCell(cell): If NombreDefinido <> "" Then NombreDefinido = "(" & NombreDefinido & ") "
         Contenido = "\" & Contenido & "\"
-        Log Direccion & NombreDefinido & Contenido
+        Logger.Log Direccion & NombreDefinido & Contenido
         
         'Reportamos si la celda tiene DV o no:
         If DvInfo.CellHasValidation(cell) Then
-            Log DvInfo.GetDVInfo()
-            Log
+            Logger.Log DvInfo.GetDVInfo()
+            Logger.Log
         End If
         
         ProcesaCelda = iterationIndex + 1
@@ -570,23 +572,6 @@ End Function
 
 '====================================================================================================
 
-Sub Log(Optional Mensaje As String)
-    'Debug.Print Mensaje
-    Stream.WriteLine (Mensaje)
-End Sub
-
-'----------------------------------------------------------------------------------------------------
-'Purpose: Regresa verdadero si al intentar accesar el Stream, marca error. (Se asume que está cerrada)
-'----------------------------------------------------------------------------------------------------
-Function StreamClosed() As Boolean
-    On Error GoTo IsClosed
-    StreamClosed = Stream.AtEndOfLine
-    StreamClosed = False 'No marcó error, el Stream no está cerrado.
-    Exit Function
-IsClosed:
-    StreamClosed = True
-End Function
-
 Sub SaveSettings()
     On Error Resume Next: Application.Calculation = xlCalculationManual: On Error GoTo 0
     Application.ScreenUpdating = False
@@ -607,16 +592,23 @@ End Sub
 Sub MensajeFinal()
     Dim MensajeFinal As String
     
-    'Calculamos el tiempo empleado
-    EllapsedMinutes = FormatNumber(DateDiff("s", StartTime, Date + Time) / 60, 2)
+    CalculaTiempoEmpleado
     
     'Construimos el mensaje.
     MensajeFinal = "** Fin del proceso de exportación."
-    If flVisual Then MensajeFinal = MensajeFinal & " Proceso realizado en " & EllapsedMinutes & " minutos."
+    If flVisual Then MensajeFinal = MensajeFinal & " Proceso realizado en " & EllapsedLegend & " "
     MensajeFinal = MensajeFinal & " **"
     
-    Log MensajeFinal
-    Log GenVersionString()
+    Logger.Log MensajeFinal
+    Logger.Log GenVersionString()
+End Sub
+
+'----------------------------------------------------------------------------------------------------
+'Purpose: Calcula y formatea el tiempo utilizado.
+'----------------------------------------------------------------------------------------------------
+Sub CalculaTiempoEmpleado()
+    EllapsedSeconds = DateDiff("s", StartTime, Date + Time)
+    EllapsedLegend = Utils.FormatEllapsedTime(EllapsedSeconds)
 End Sub
 \\\--- END OF MODULE ---
 
@@ -858,4 +850,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.11.1
+Lib_ExportToTxt [ExportToTxt.xls] v2.12.1
