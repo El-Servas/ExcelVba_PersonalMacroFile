@@ -723,7 +723,7 @@ End Function
 ' Author    : +
 ' Date      : 12/06/2013
 ' Purpose   : Macros útiles que siempre están disponibles en Excel.
-' Version   : POST v1.7
+' Version   : v1.8
 '---------------------------------------------------------------------------------------
 
 Global Const PRINT_PROC_DELIMITERS As Boolean = False
