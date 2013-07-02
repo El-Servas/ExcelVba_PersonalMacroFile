@@ -56,7 +56,7 @@ End Sub
 Global Const PRINT_PROC_DELIMITERS As Boolean = False
 
 Option Explicit
-Public Const VERSION As String = "v2.12"
+Public Const VERSION As String = "v2.12.1"
 '---------------------------------------------------------------------------------------
 
 Public Const LIB_NAME As String = "Lib_ExportToTxt"
@@ -313,7 +313,7 @@ End Sub
 
 Sub GenEncabezado()
     Logger.Log TOKEN_HEADER & """" & BTE.name & """"
-    If flVisual Then Log "Fecha y hora de generación: " & Date + Time
+    If flVisual Then Logger.Log "Fecha y hora de generación: " & Date + Time
     Logger.Log
 End Sub
 
@@ -850,4 +850,4 @@ End Function
 
 
 ** Fin del proceso de exportación. **
-Lib_ExportToTxt [ExportToTxt.xls] v2.12
+Lib_ExportToTxt [ExportToTxt.xls] v2.12.1
